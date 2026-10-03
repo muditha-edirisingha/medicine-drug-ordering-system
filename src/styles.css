@@ -1,1 +1,26 @@
-/* You can add global styles to this file, and also import other style files */
+@import "bootstrap/dist/css/bootstrap.min.css";
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap');
+
+:root {
+	--ink: #183332;
+	--muted: #6d7a79;
+	--line: #dfe7e4;
+	--paper: #ffffff;
+	--canvas: #f2f5f2;
+	--teal: #087d77;
+	--font-body: 'DM Sans', 'Segoe UI', sans-serif;
+	--font-display: 'Newsreader', Georgia, serif;
+	color-scheme: light;
+	font-family: var(--font-body);
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+* { box-sizing: border-box; }
+html, body { min-width: 320px; min-height: 100%; margin: 0; background: var(--canvas); }
+body { color: var(--ink); font-family: var(--font-body); font-size: 14px; letter-spacing: 0; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid rgb(8 125 119 / 28%); outline-offset: 2px; }

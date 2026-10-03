@@ -1,10 +1,12 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { AppComponent } from './app.component';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
+      providers: [provideRouter([])],
     }).compileComponents();
   });
 
@@ -14,16 +16,17 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have the 'medicine-drug-ordering-system' title`, () => {
+  it('should expose the management navigation', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.title).toEqual('medicine-drug-ordering-system');
+    expect(app.navigation.flatMap(group => group.items).length).toBe(15);
   });
 
-  it('should render title', () => {
+  it('should render the application shell', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, medicine-drug-ordering-system');
+    expect(compiled.querySelector('.brand-copy strong')?.textContent).toContain('MedOrder');
+    expect(compiled.querySelector('nav[aria-label="Main navigation"]')).toBeTruthy();
   });
 });

@@ -1,0 +1,60 @@
+<section class="dashboard-page">
+  <div class="dashboard-heading">
+    <div>
+      <p class="eyebrow">Operations overview</p>
+      <h1>Good work starts with a clear view.</h1>
+      <p class="heading-copy">A live snapshot from the pharmacy records available to this workspace.</p>
+    </div>
+    <div class="refresh-stamp">
+      <span class="live-dot"></span>
+      <span>{{ loading ? 'Connecting to backend' : (updatedAt | date:'h:mm a') + ' · Local snapshot' }}</span>
+    </div>
+  </div>
+
+  <div class="connection-note" *ngIf="errorMessage" role="status">
+    <span class="note-mark">!</span>
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <div class="summary-strip" aria-label="Available data summary">
+    <div>
+      <span class="summary-label">Records counted</span>
+      <strong>{{ loading ? '...' : totalRecords }}</strong>
+    </div>
+    <div class="summary-divider"></div>
+    <div>
+      <span class="summary-label">Live collections</span>
+      <strong>{{ loading ? '...' : availableCount }} <small>/ {{ snapshots.length }}</small></strong>
+    </div>
+    <p>Counts are based on records returned by the backend. No derived sales or performance metrics.</p>
+  </div>
+
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">At a glance</p>
+      <h2>Connected collections</h2>
+    </div>
+    <a routerLink="/orders" class="text-link">Open order management <span aria-hidden="true">→</span></a>
+  </div>
+
+  <div class="snapshot-grid">
+    <a *ngFor="let snapshot of snapshots" class="snapshot-item" [ngClass]="snapshot.tone" [routerLink]="snapshot.path">
+      <span class="snapshot-topline"><span class="snapshot-kicker">{{ snapshot.label }}</span><span class="snapshot-arrow" aria-hidden="true">↗</span></span>
+      <strong>{{ loading ? '...' : (snapshot.count === null ? '—' : snapshot.count) }}</strong>
+      <span class="snapshot-foot">{{ snapshot.count === null && !loading ? 'Unavailable' : 'Open collection' }}</span>
+    </a>
+  </div>
+
+  <div class="dashboard-bottom">
+    <div class="bottom-copy">
+      <p class="eyebrow">Workspace</p>
+      <h2>Pharmacy, in one place.</h2>
+      <p>Browse operational records using the backend's available list, search, and update actions.</p>
+    </div>
+    <div class="quick-links">
+      <a routerLink="/medicines">Medicine catalogue <span>→</span></a>
+      <a routerLink="/inventory">Stock control <span>→</span></a>
+      <a routerLink="/support-requests">Customer care <span>→</span></a>
+    </div>
+  </div>
+</section>

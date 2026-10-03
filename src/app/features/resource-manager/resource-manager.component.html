@@ -1,0 +1,145 @@
+<section class="resource-page" *ngIf="resource as current">
+  <div class="resource-heading">
+    <div>
+      <p class="eyebrow">{{ current.eyebrow }} <span class="eyebrow-slash">/</span> Records</p>
+      <h1>{{ current.title }}</h1>
+      <p class="resource-description">{{ current.description }}</p>
+    </div>
+    <button class="btn-create" type="button" (click)="openCreate()"><span aria-hidden="true">+</span> Add {{ current.singular }}</button>
+  </div>
+
+  <div class="resource-alert alert-success" *ngIf="successMessage" role="status">
+    <span class="alert-mark">✓</span><span>{{ successMessage }}</span>
+    <button type="button" class="alert-close" aria-label="Dismiss message" (click)="successMessage = ''">×</button>
+  </div>
+  <div class="resource-alert alert-error" *ngIf="errorMessage" role="alert">
+    <span class="alert-mark">!</span><span>{{ errorMessage }}</span>
+    <button type="button" class="alert-close" aria-label="Dismiss message" (click)="errorMessage = ''">×</button>
+  </div>
+  <div class="list-toolbar">
+    <div class="toolbar-title">
+      <span class="table-indicator"></span>
+      <strong>All {{ current.title.toLowerCase() }}</strong>
+      <span class="record-total">{{ filteredRecords.length }} records</span>
+    </div>
+    <div class="toolbar-actions">
+      <select *ngIf="current.searchRoutes.length" class="form-select search-mode" [value]="searchIndex" (change)="setSearchIndex($any($event.target).value)" aria-label="Search field">
+        <option value="-1">Search all fields</option>
+        <option *ngFor="let route of current.searchRoutes; let index = index" [value]="index">{{ route.label }}</option>
+      </select>
+      <label class="search-box">
+        <span class="visually-hidden">Search {{ current.title }}</span>
+        <span class="search-glyph" aria-hidden="true">⌕</span>
+        <input type="search" [value]="searchText" (input)="searchText = $any($event.target).value" (keydown.enter)="runSearch()" placeholder="Search records" />
+      </label>
+      <button type="button" class="btn-quiet" (click)="runSearch()">Search</button>
+      <button type="button" class="btn-quiet" *ngIf="searchText || searchIndex >= 0" (click)="clearSearch()">Clear</button>
+      <button type="button" class="btn-quiet" *ngIf="current.lowStockPath" (click)="showLowStock()">Low stock</button>
+      <button type="button" class="btn-quiet" *ngIf="current.lowStockPath && filteredRecords.length !== records.length" (click)="showAllRecords()">All stock</button>
+      <button type="button" class="btn-quiet refresh-button" (click)="loadRecords()" [disabled]="loading">Refresh</button>
+    </div>
+  </div>
+
+  <div class="loading-line" *ngIf="loading" role="status"><span></span>Loading {{ current.title.toLowerCase() }}...</div>
+
+  <div class="table-frame" *ngIf="!loading && filteredRecords.length">
+    <div class="table-scroll">
+      <table class="table resource-table">
+        <thead>
+          <tr>
+            <th *ngFor="let column of current.columns" scope="col">{{ column === current.idField ? 'ID' : column }}</th>
+            <th scope="col" class="actions-heading">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let record of visibleRows">
+            <td *ngFor="let column of current.columns">
+              <span *ngIf="isStatusColumn(column)" class="status-pill" [ngClass]="statusClass(record[column])">{{ fieldValue(record, column) }}</span>
+              <span *ngIf="!isStatusColumn(column)" [class.primary-cell]="column === current.idField">{{ fieldValue(record, column) }}</span>
+            </td>
+            <td class="row-actions">
+              <button type="button" class="action-link" (click)="openEdit(record)">Edit</button>
+              <span class="action-divider">·</span>
+              <button type="button" class="action-link action-delete" (click)="askDelete(record)">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <span>Showing {{ firstShown }}–{{ lastShown }} of {{ filteredRecords.length }}</span>
+      <div class="pagination-controls">
+        <label for="page-size">Rows</label>
+        <select id="page-size" class="form-select page-size" [value]="pageSize" (change)="changePageSize($any($event.target).value)">
+          <option value="10">10</option><option value="25">25</option><option value="50">50</option>
+        </select>
+        <button type="button" class="page-button" (click)="changePage(-1)" [disabled]="page === 0" aria-label="Previous page">‹</button>
+        <span class="page-count">{{ page + 1 }} / {{ pageCount }}</span>
+        <button type="button" class="page-button" (click)="changePage(1)" [disabled]="page + 1 >= pageCount" aria-label="Next page">›</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && !filteredRecords.length && !errorMessage">
+    <span class="empty-mark" aria-hidden="true">—</span>
+    <h2>{{ records.length ? 'No matching records' : 'Nothing here yet' }}</h2>
+    <p>{{ records.length ? 'Try another search term or clear the current filter.' : 'Records returned by the backend will appear here.' }}</p>
+    <button *ngIf="!records.length" class="btn-create btn-create-small" type="button" (click)="openCreate()">Add {{ current.singular }}</button>
+  </div>
+
+  <div class="relation-notes" *ngIf="showForm && hasRelationErrors">
+    <p *ngFor="let item of relationErrors | keyvalue">{{ item.key }} options could not be loaded. {{ item.value }}</p>
+  </div>
+</section>
+
+<div class="dialog-backdrop" *ngIf="showForm && resource as current" (click)="closeDialog()">
+  <section class="dialog-panel" role="dialog" aria-modal="true" [attr.aria-label]="(editingRecord ? 'Edit ' : 'Add ') + current.singular" (click)="$event.stopPropagation()">
+    <header class="dialog-header">
+      <div>
+        <p class="eyebrow">{{ editingRecord ? 'Update record' : 'New record' }}</p>
+        <h2>{{ editingRecord ? 'Edit ' + current.singular : 'Add ' + current.singular }}</h2>
+      </div>
+      <button type="button" class="dialog-close" aria-label="Close dialog" (click)="closeDialog()">×</button>
+    </header>
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <div class="form-grid">
+        <div *ngFor="let field of current.fields" class="field-wrap" [class.field-wide]="field.kind === 'textarea'" [class.field-checkbox]="field.kind === 'checkbox'">
+          <label *ngIf="field.kind !== 'checkbox'" [for]="'field-' + field.key">{{ field.label }}<span *ngIf="field.required" class="required-mark"> *</span></label>
+          <ng-container [ngSwitch]="field.kind">
+            <select *ngSwitchCase="'relation'" class="form-select" [id]="'field-' + field.key" [formControlName]="field.key">
+              <option [ngValue]="null">Choose {{ field.label.toLowerCase() }}</option>
+              <option *ngFor="let option of relationRecords[field.relation?.resource ?? ''] ?? []" [ngValue]="option[field.relation?.valueField ?? '']">{{ recordLabel(option, field.relation?.labelFields ?? []) }}</option>
+            </select>
+            <textarea *ngSwitchCase="'textarea'" class="form-control" [id]="'field-' + field.key" [formControlName]="field.key" rows="3"></textarea>
+            <div *ngSwitchCase="'checkbox'" class="checkbox-control">
+              <input class="form-check-input" type="checkbox" [id]="'field-' + field.key" [formControlName]="field.key" />
+              <label [for]="'field-' + field.key">{{ field.label }}</label>
+            </div>
+            <input *ngSwitchDefault class="form-control" [id]="'field-' + field.key" [type]="field.kind" [formControlName]="field.key" [step]="field.kind === 'number' ? 'any' : null" />
+          </ng-container>
+          <small *ngIf="field.help" class="field-help">{{ field.help }}</small>
+          <small *ngIf="form.controls[field.key].touched && form.controls[field.key].hasError('required')" class="field-error">Select a {{ field.label.toLowerCase() }}.</small>
+          <small *ngIf="form.controls[field.key].touched && form.controls[field.key].hasError('email')" class="field-error">Enter a valid email address.</small>
+        </div>
+      </div>
+      <p class="form-error" *ngIf="formError" role="alert">{{ formError }}</p>
+      <footer class="dialog-footer">
+        <button type="button" class="btn-cancel" (click)="closeDialog()" [disabled]="saving">Cancel</button>
+        <button type="submit" class="btn-create" [disabled]="saving">{{ saving ? 'Saving...' : (editingRecord ? 'Save changes' : 'Create record') }}</button>
+      </footer>
+    </form>
+  </section>
+</div>
+
+<div class="dialog-backdrop confirm-backdrop" *ngIf="showDeleteConfirm && pendingDelete && resource as current" (click)="showDeleteConfirm = false">
+  <section class="confirm-panel" role="alertdialog" aria-modal="true" aria-labelledby="delete-heading" (click)="$event.stopPropagation()">
+    <p class="eyebrow">Destructive action</p>
+    <h2 id="delete-heading">Delete this {{ current.singular.toLowerCase() }}?</h2>
+    <p>This action is sent to the backend and cannot be undone here.</p>
+    <div class="confirm-record">{{ rowTitle(pendingDelete) }}</div>
+    <div class="dialog-footer">
+      <button type="button" class="btn-cancel" (click)="showDeleteConfirm = false" [disabled]="deleting">Cancel</button>
+      <button type="button" class="btn-danger" (click)="confirmDelete()" [disabled]="deleting">{{ deleting ? 'Deleting...' : 'Delete record' }}</button>
+    </div>
+  </section>
+</div>
