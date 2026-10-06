@@ -1,0 +1,390 @@
+:host {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.order-manager-shell {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: clamp(1rem, 2.5vw, 2rem);
+  overflow-x: clip;
+}
+
+.page-header {
+  margin-bottom: 1.35rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.3rem;
+  color: var(--muted, #6d7a79);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.page-header h1,
+.card-heading h2,
+.subsection-header h3 {
+  margin: 0;
+  color: var(--ink, #183332);
+}
+
+.page-header h1 {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(1.7rem, 2.5vw, 2.15rem);
+}
+
+.page-subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--muted, #6d7a79);
+}
+
+.status-message {
+  overflow-wrap: anywhere;
+}
+
+.loading-panel,
+.empty-state {
+  padding: 1.25rem;
+  border: 1px solid var(--line, #dfe7e4);
+  border-radius: 12px;
+  background: var(--paper, #fff);
+  color: var(--ink, #183332);
+}
+
+.order-manager-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(310px, 0.9fr);
+  align-items: start;
+  gap: 1.25rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.table-panel,
+.details-panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line, #dfe7e4);
+  border-radius: 14px;
+  background: var(--paper, #fff);
+  box-shadow: 0 8px 28px rgb(24 51 50 / 4%);
+}
+
+.card-heading {
+  display: flex;
+  min-height: 62px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid #edf2f0;
+}
+
+.card-heading h2 {
+  font-size: 1.12rem;
+  font-weight: 650;
+}
+
+.details-heading {
+  align-items: flex-start;
+}
+
+.record-count,
+.order-reference {
+  flex: 0 0 auto;
+  color: var(--muted, #6d7a79);
+  font-size: 0.78rem;
+}
+
+.order-reference {
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  background: #f2f7f5;
+  color: var(--teal, #087d77);
+  font-weight: 700;
+}
+
+.table-responsive {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+}
+
+.orders-table-scroll {
+  max-height: min(70vh, 760px);
+}
+
+.table-modern {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+}
+
+.orders-table {
+  min-width: 790px;
+}
+
+.table-modern th,
+.table-modern td {
+  padding: 0.8rem 0.85rem;
+  border-bottom: 1px solid #edf2f0;
+  vertical-align: middle;
+}
+
+.table-modern thead th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  background: #f4f8f7;
+  color: var(--ink, #183332);
+  font-size: 0.69rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.table-modern tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.orders-table td {
+  font-size: 0.84rem;
+}
+
+.order-id,
+.date-cell,
+.amount-cell {
+  white-space: nowrap;
+}
+
+.customer-cell {
+  min-width: 115px;
+  overflow-wrap: anywhere;
+}
+
+.address-cell {
+  min-width: 140px;
+  max-width: 220px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.selected-row {
+  background: rgb(8 125 119 / 5%);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.32rem 0.58rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.status-pending {
+  background: rgb(230 174 31 / 15%);
+  color: #8a6200;
+}
+
+.status-confirmed {
+  background: rgb(8 125 119 / 12%);
+  color: #0a6d68;
+}
+
+.status-processing {
+  background: rgb(40 98 205 / 12%);
+  color: #214fa7;
+}
+
+.status-completed {
+  background: rgb(23 128 79 / 12%);
+  color: #147146;
+}
+
+.details-button {
+  white-space: nowrap;
+}
+
+.details-panel {
+  padding-bottom: 0.25rem;
+}
+
+.details-panel > .detail-grid,
+.order-items-section {
+  margin-right: 1rem;
+  margin-left: 1rem;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.detail-item {
+  min-width: 0;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid #edf2f0;
+  border-radius: 10px;
+  background: #f8faf9;
+}
+
+.detail-full {
+  grid-column: 1 / -1;
+}
+
+.detail-item dt,
+.status-control label {
+  display: block;
+  margin: 0 0 0.35rem;
+  color: var(--muted, #6d7a79);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.detail-item dd {
+  margin: 0;
+  color: var(--ink, #183332);
+  font-size: 0.88rem;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+
+.delivery-address {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.status-actions .form-select {
+  flex: 1 1 145px;
+  min-width: 0;
+}
+
+.save-status-button {
+  flex: 0 0 auto;
+  min-height: 38px;
+  white-space: nowrap;
+}
+
+.order-items-section {
+  min-width: 0;
+}
+
+.subsection-header {
+  padding: 0.25rem 0 0.65rem;
+}
+
+.subsection-header h3 {
+  font-size: 0.98rem;
+  font-weight: 650;
+}
+
+.items-table-scroll {
+  margin-bottom: 1rem;
+}
+
+.compact-table {
+  min-width: 390px;
+}
+
+.compact-table th,
+.compact-table td {
+  padding: 0.65rem 0.5rem;
+  font-size: 0.76rem;
+}
+
+.compact-table thead th {
+  font-size: 0.63rem;
+}
+
+.medicine-cell {
+  min-width: 105px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1150px) {
+  .order-manager-layout {
+    grid-template-columns: minmax(0, 1.45fr) minmax(290px, 0.9fr);
+    gap: 0.9rem;
+  }
+
+  .table-modern th,
+  .table-modern td {
+    padding-right: 0.65rem;
+    padding-left: 0.65rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .order-manager-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .details-panel {
+    width: 100%;
+  }
+
+  .orders-table-scroll {
+    max-height: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .order-manager-shell {
+    padding: 1rem 0.75rem;
+  }
+
+  .order-manager-layout {
+    gap: 0.85rem;
+  }
+
+  .card-heading {
+    min-height: 54px;
+    padding: 0.85rem;
+  }
+
+  .details-panel > .detail-grid,
+  .order-items-section {
+    margin-right: 0.75rem;
+    margin-left: 0.75rem;
+  }
+
+  .detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.55rem;
+    margin-top: 0.75rem;
+  }
+
+  .detail-full {
+    grid-column: auto;
+  }
+
+  .status-actions {
+    align-items: stretch;
+  }
+
+  .status-actions .form-select,
+  .save-status-button {
+    flex-basis: 100%;
+    width: 100%;
+  }
+}

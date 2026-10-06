@@ -22,8 +22,10 @@ export class RegisterStaffComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   readonly staffRoles: { value: StaffRole; label: string }[] = [
+    { value: 'ORDER_MANAGER', label: 'Order manager' },
     { value: 'PHARMACIST', label: 'Pharmacist' },
     { value: 'PHARMACY_MANAGER', label: 'Pharmacy manager' },
+    { value: 'BRANCH_MANAGER', label: 'Branch manager' },
     { value: 'MARKETING_OFFICER', label: 'Marketing officer' },
     { value: 'CUSTOMER_SUPPORT_OFFICER', label: 'Customer support officer' },
   ];
@@ -35,7 +37,7 @@ export class RegisterStaffComponent {
     licenseNo: [''],
     username: ['', Validators.required],
     password: ['', Validators.required],
-    role: ['PHARMACIST' as StaffRole, Validators.required],
+    role: ['ORDER_MANAGER' as StaffRole, Validators.required],
   });
   loading = false;
   errorMessage = '';

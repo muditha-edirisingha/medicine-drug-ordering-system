@@ -36,37 +36,38 @@ export class AppComponent {
         { label: 'Support', path: '/customer/support' },
       ] },
     ],
+    ORDER_MANAGER: [
+      { title: 'Workspace', items: [
+        { label: 'Orders', path: '/orders' },
+      ] },
+    ],
     PHARMACIST: [
-      { title: 'Workspace', items: [{ label: 'Overview', path: '/dashboard' }] },
-      { title: 'Clinical', items: [
+      { title: 'Workspace', items: [
         { label: 'Prescriptions', path: '/prescriptions' },
         { label: 'Medicines', path: '/medicines' },
       ] },
     ],
     PHARMACY_MANAGER: [
-      { title: 'Workspace', items: [{ label: 'Overview', path: '/dashboard' }] },
-      { title: 'Pharmacy', items: [
+      { title: 'Workspace', items: [
         { label: 'Inventory', path: '/inventory' },
-        { label: 'Branches', path: '/branches' },
         { label: 'Medicines', path: '/medicines' },
-        { label: 'Pharmacists', path: '/pharmacists' },
-        { label: 'Pharmacy managers', path: '/pharmacy-managers' },
-        { label: 'Marketing officers', path: '/marketing-officers' },
-        { label: 'Support officers', path: '/customer-support-officers' },
+      ] },
+    ],
+    BRANCH_MANAGER: [
+      { title: 'Workspace', items: [
+        { label: 'Branches', path: '/branches' },
       ] },
     ],
     MARKETING_OFFICER: [
-      { title: 'Workspace', items: [{ label: 'Overview', path: '/dashboard' }] },
-      { title: 'Marketing', items: [
+      { title: 'Workspace', items: [
         { label: 'Promotions', path: '/promotions' },
         { label: 'Coupons', path: '/coupons' },
       ] },
     ],
     CUSTOMER_SUPPORT_OFFICER: [
-      { title: 'Workspace', items: [{ label: 'Overview', path: '/dashboard' }] },
-      { title: 'Customer care', items: [
+      { title: 'Workspace', items: [
         { label: 'Customers', path: '/customers' },
-        { label: 'Support requests', path: '/support-requests' },
+        { label: 'Support Requests', path: '/support-requests' },
       ] },
     ],
   };

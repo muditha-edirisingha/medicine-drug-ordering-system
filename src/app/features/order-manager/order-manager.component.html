@@ -1,0 +1,139 @@
+<section class="order-manager-shell container-fluid">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Fulfilment</p>
+      <h1>Order Management</h1>
+      <p class="page-subtitle">View and manage customer orders</p>
+    </div>
+  </header>
+
+  <div *ngIf="errorMessage" class="alert alert-danger status-message" role="alert">{{ errorMessage }}</div>
+  <div *ngIf="successMessage" class="alert alert-success status-message" role="status">{{ successMessage }}</div>
+
+  <div *ngIf="loading && !orders.length" class="loading-panel">
+    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+    Loading orders…
+  </div>
+
+  <div *ngIf="!loading && !orders.length" class="empty-state">
+    No orders are available right now.
+  </div>
+
+  <div *ngIf="orders.length" class="order-manager-layout">
+    <section class="table-panel card" aria-labelledby="orders-heading">
+      <div class="card-heading">
+        <h2 id="orders-heading">Orders</h2>
+        <span class="record-count">{{ orders.length }} total</span>
+      </div>
+      <div class="table-responsive orders-table-scroll">
+        <table class="table table-modern align-middle orders-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Order Date</th>
+              <th>Status</th>
+              <th>Total Amount</th>
+              <th>Delivery Address</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let order of orders" [class.selected-row]="selectedOrder?.orderId === order.orderId">
+              <td class="order-id">#{{ order.orderId }}</td>
+              <td class="customer-cell">{{ getCustomerName(order.customerId) }}</td>
+              <td class="date-cell">{{ formatDate(order.orderDate) }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="{
+                  'status-pending': order.orderStatus === 'PENDING',
+                  'status-confirmed': order.orderStatus === 'CONFIRMED',
+                  'status-processing': order.orderStatus === 'PROCESSING',
+                  'status-completed': order.orderStatus === 'COMPLETED'
+                }">{{ order.orderStatus || 'PENDING' }}</span>
+              </td>
+              <td class="amount-cell">{{ formatCurrency(order.totalAmount) }}</td>
+              <td class="address-cell">{{ order.deliveryAddress || '—' }}</td>
+              <td>
+                <button type="button" class="btn btn-sm btn-outline-primary details-button" (click)="selectOrder(order)">View details</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <aside class="details-panel card" *ngIf="selectedOrder" aria-labelledby="overview-heading">
+      <div class="card-heading details-heading">
+        <div>
+          <p class="eyebrow">Selected order</p>
+          <h2 id="overview-heading">Order Overview</h2>
+        </div>
+        <span class="order-reference">#{{ selectedOrder.orderId }}</span>
+      </div>
+
+      <dl class="detail-grid">
+        <div class="detail-item">
+          <dt>Order ID</dt>
+          <dd>#{{ selectedOrder.orderId }}</dd>
+        </div>
+        <div class="detail-item">
+          <dt>Customer</dt>
+          <dd>{{ getCustomerName(selectedOrder.customerId) }}</dd>
+        </div>
+        <div class="detail-item">
+          <dt>Order Date</dt>
+          <dd>{{ formatDate(selectedOrder.orderDate) }}</dd>
+        </div>
+        <div class="detail-item">
+          <dt>Total Amount</dt>
+          <dd>{{ formatCurrency(selectedOrder.totalAmount) }}</dd>
+        </div>
+        <div class="detail-item detail-full">
+          <dt>Delivery Address</dt>
+          <dd class="delivery-address">{{ selectedOrder.deliveryAddress || '—' }}</dd>
+        </div>
+        <div class="detail-item detail-full status-control">
+          <label for="order-status">Current Status</label>
+          <div class="status-actions">
+            <select id="order-status" class="form-select" [value]="pendingStatus" (change)="setPendingStatus($any($event.target).value)" [disabled]="saving">
+              <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
+            </select>
+            <button type="button" class="btn btn-primary save-status-button" (click)="saveOrderStatus()" [disabled]="!hasStatusChanges || saving">
+              <span *ngIf="saving" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+              {{ saving ? 'Saving…' : 'Save Status' }}
+            </button>
+          </div>
+        </div>
+      </dl>
+
+      <section class="order-items-section" aria-labelledby="order-items-heading">
+        <div class="subsection-header">
+          <h3 id="order-items-heading">Order Items</h3>
+        </div>
+        <div class="table-responsive items-table-scroll">
+          <table class="table table-sm table-modern compact-table">
+            <thead>
+              <tr>
+                <th>Medicine</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of selectedOrderItems">
+                <td class="medicine-cell">{{ getMedicineName(item.medicineId) }}</td>
+                <td>{{ item.quantity ?? 0 }}</td>
+                <td>{{ formatCurrency(item.unitPrice) }}</td>
+                <td>{{ formatCurrency(item.subTotal) }}</td>
+              </tr>
+              <tr *ngIf="!selectedOrderItems.length">
+                <td colspan="4" class="text-muted text-center">No items found for this order.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </aside>
+  </div>
+</section>

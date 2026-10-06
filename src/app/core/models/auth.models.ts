@@ -1,7 +1,9 @@
 export const USER_ROLES = [
   'CUSTOMER',
+  'ORDER_MANAGER',
   'PHARMACIST',
   'PHARMACY_MANAGER',
+  'BRANCH_MANAGER',
   'MARKETING_OFFICER',
   'CUSTOMER_SUPPORT_OFFICER',
 ] as const;
@@ -48,10 +50,14 @@ export function dashboardPathFor(role: UserRole): string {
   switch (role) {
     case 'CUSTOMER':
       return '/customer/dashboard';
+    case 'ORDER_MANAGER':
+      return '/orders';
     case 'PHARMACIST':
       return '/prescriptions';
     case 'PHARMACY_MANAGER':
-      return '/dashboard';
+      return '/inventory';
+    case 'BRANCH_MANAGER':
+      return '/branches';
     case 'MARKETING_OFFICER':
       return '/promotions';
     case 'CUSTOMER_SUPPORT_OFFICER':

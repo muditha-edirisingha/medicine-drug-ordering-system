@@ -37,7 +37,7 @@ describe('AppComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.brand-copy strong')?.textContent).toContain('MedOrder');
     expect(compiled.querySelector('nav[aria-label="Main navigation"]')).toBeTruthy();
-    expect(compiled.querySelectorAll('.nav-link-item').length).toBe(8);
+    expect(compiled.querySelectorAll('.nav-link-item').length).toBe(2);
   });
 
   it('shows only the customer portal navigation for customers', () => {
