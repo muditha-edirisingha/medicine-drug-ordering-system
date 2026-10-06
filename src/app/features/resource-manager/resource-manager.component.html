@@ -106,6 +106,10 @@
         <div *ngFor="let field of current.fields" class="field-wrap" [class.field-wide]="field.kind === 'textarea'" [class.field-checkbox]="field.kind === 'checkbox'">
           <label *ngIf="field.kind !== 'checkbox'" [for]="'field-' + field.key">{{ field.label }}<span *ngIf="field.required" class="required-mark"> *</span></label>
           <ng-container [ngSwitch]="field.kind">
+            <select *ngSwitchCase="'select'" class="form-select" [id]="'field-' + field.key" [formControlName]="field.key">
+              <option [ngValue]="null">Choose {{ field.label.toLowerCase() }}</option>
+              <option *ngFor="let option of field.options ?? []" [ngValue]="option">{{ option }}</option>
+            </select>
             <select *ngSwitchCase="'relation'" class="form-select" [id]="'field-' + field.key" [formControlName]="field.key">
               <option [ngValue]="null">Choose {{ field.label.toLowerCase() }}</option>
               <option *ngFor="let option of relationRecords[field.relation?.resource ?? ''] ?? []" [ngValue]="option[field.relation?.valueField ?? '']">{{ recordLabel(option, field.relation?.labelFields ?? []) }}</option>

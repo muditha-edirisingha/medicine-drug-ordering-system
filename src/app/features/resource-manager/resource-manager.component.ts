@@ -319,7 +319,12 @@ export class ResourceManagerComponent implements OnInit {
   }
 
   private inputValue(field: ResourceField, value: unknown): unknown {
-    if (value === null || value === undefined) return field.kind === 'checkbox' ? false : null;
+    if (value === null || value === undefined || (field.kind === 'select' && value === '')) {
+      return field.kind === 'checkbox' ? false : null;
+    }
+    if (field.kind === 'select' && typeof value === 'string') {
+      return field.options?.find(option => option.toLocaleUpperCase() === value.toLocaleUpperCase()) ?? value;
+    }
     if (field.kind === 'datetime-local' && typeof value === 'string') return value.slice(0, 16);
     return value;
   }

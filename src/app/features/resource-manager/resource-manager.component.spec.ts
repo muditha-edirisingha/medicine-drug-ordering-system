@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
+import { RESOURCE_BY_KEY } from '../../core/models/resource.models';
 import { ResourceDataService } from '../../core/services/resource-data.service';
 import { ResourceManagerComponent } from './resource-manager.component';
 
@@ -64,5 +65,67 @@ describe('ResourceManagerComponent customer passwords', () => {
     component.save();
 
     expect(data.update.calls.mostRecent().args[1]['password']).toBe('replacement-secret');
+  });
+
+  it('uses the configured status options for every generic resource', () => {
+    const expected: Record<string, string[]> = {
+      branches: ['ACTIVE', 'CLOSED'],
+      customers: ['ACTIVE', 'INACTIVE'],
+      pharmacists: ['ACTIVE', 'INACTIVE'],
+      'pharmacy-managers': ['ACTIVE', 'INACTIVE'],
+      'branch-managers': ['ACTIVE', 'INACTIVE'],
+      'marketing-officers': ['ACTIVE', 'INACTIVE'],
+      'customer-support-officers': ['ACTIVE', 'INACTIVE'],
+      promotions: ['ACTIVE', 'INACTIVE', 'EXPIRED'],
+      coupons: ['ACTIVE', 'INACTIVE', 'EXPIRED'],
+      prescriptions: ['PENDING', 'APPROVED', 'REJECTED'],
+      'support-requests': ['OPEN', 'IN_PROGRESS', 'RESOLVED'],
+    };
+
+    for (const [resourceKey, options] of Object.entries(expected)) {
+      const statusField = RESOURCE_BY_KEY.get(resourceKey)?.fields.find(field => field.key === 'status');
+      expect(statusField?.kind).withContext(resourceKey).toBe('select');
+      expect(statusField?.options).withContext(resourceKey).toEqual(options);
+      expect(statusField?.required).withContext(resourceKey).toBeUndefined();
+    }
+
+    expect(RESOURCE_BY_KEY.get('orders')?.fields.find(field => field.key === 'orderStatus')?.kind).toBe('text');
+  });
+
+  it('shows an existing status selected in the edit dropdown', () => {
+    const component = fixture.componentInstance;
+    component.openEdit(customer);
+    fixture.detectChanges();
+
+    const statusSelect = fixture.nativeElement.querySelector('#field-status') as HTMLSelectElement;
+    expect(Array.from(statusSelect.options).map(option => option.textContent?.trim()))
+      .toEqual(['Choose status', 'ACTIVE', 'INACTIVE']);
+    expect(component.form.controls['status'].value).toBe('ACTIVE');
+  });
+
+  it('keeps status optional and submits an empty status as null', () => {
+    const component = fixture.componentInstance;
+    component.openCreate();
+    component.save();
+
+    expect(data.create).toHaveBeenCalled();
+    expect(data.create.calls.mostRecent().args[1]['status']).toBeNull();
+  });
+
+  it('renders Support Request priority as a fixed select and preserves the existing value', () => {
+    const component = fixture.componentInstance;
+    const supportResource = RESOURCE_BY_KEY.get('support-requests');
+    const priorityField = supportResource?.fields.find(field => field.key === 'priority');
+    expect(priorityField?.kind).toBe('select');
+    expect(priorityField?.options).toEqual(['LOW', 'NORMAL', 'HIGH']);
+
+    component.resource = supportResource;
+    component.openEdit({ supportId: 7, priority: 'HIGH', status: 'OPEN' });
+    fixture.detectChanges();
+
+    const prioritySelect = fixture.nativeElement.querySelector('#field-priority') as HTMLSelectElement;
+    expect(Array.from(prioritySelect.options).map(option => option.textContent?.trim()))
+      .toEqual(['Choose priority', 'LOW', 'NORMAL', 'HIGH']);
+    expect(component.form.controls['priority'].value).toBe('HIGH');
   });
 });

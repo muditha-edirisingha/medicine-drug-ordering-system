@@ -1,6 +1,6 @@
 import { ApiRecord } from './api.models';
 
-export type FieldKind = 'text' | 'email' | 'password' | 'number' | 'date' | 'datetime-local' | 'time' | 'textarea' | 'checkbox' | 'relation';
+export type FieldKind = 'text' | 'email' | 'password' | 'number' | 'date' | 'datetime-local' | 'time' | 'textarea' | 'checkbox' | 'relation' | 'select';
 
 export interface RelationshipOption {
   resource: string;
@@ -13,6 +13,7 @@ export interface ResourceField {
   label: string;
   kind: FieldKind;
   required?: boolean;
+  options?: string[];
   relation?: RelationshipOption;
   help?: string;
 }
@@ -54,6 +55,13 @@ const commonStaffSearches = (root: string, idPath: string, idLabel: string): Sea
   { label: 'Email', path: `${root}/search-by-email` },
   { label: 'Status', path: `${root}/search-by-status` },
 ];
+
+const statusField = (...options: string[]): ResourceField => ({
+  key: 'status',
+  label: 'Status',
+  kind: 'select',
+  options,
+});
 
 export const RESOURCES: ResourceDefinition[] = [
   {
@@ -99,7 +107,7 @@ export const RESOURCES: ResourceDefinition[] = [
       { key: 'prescriptionDate', label: 'Prescription date', kind: 'date' },
       { key: 'uploadDate', label: 'Upload date', kind: 'datetime-local' },
       { key: 'prescriptionFile', label: 'Prescription file reference', kind: 'text' },
-      { key: 'status', label: 'Status', kind: 'text' },
+      statusField('PENDING', 'APPROVED', 'REJECTED'),
       { key: 'reviewedDate', label: 'Reviewed date', kind: 'datetime-local' },
       { key: 'rejectionReason', label: 'Rejection reason', kind: 'textarea' },
     ],
@@ -144,7 +152,7 @@ export const RESOURCES: ResourceDefinition[] = [
       { key: 'email', label: 'Email', kind: 'email' },
       { key: 'openingTime', label: 'Opening time', kind: 'time' },
       { key: 'closingTime', label: 'Closing time', kind: 'time' },
-      { key: 'status', label: 'Status', kind: 'text' },
+      statusField('ACTIVE', 'CLOSED'),
       { key: 'address', label: 'Address', kind: 'textarea' },
     ],
     columns: ['branchId', 'branchName', 'managerId', 'phoneNo', 'status'],
@@ -167,7 +175,7 @@ export const RESOURCES: ResourceDefinition[] = [
       { key: 'phoneNo', label: 'Phone number', kind: 'text' },
       { key: 'username', label: 'Username', kind: 'text' },
       { key: 'password', label: 'Password', kind: 'password', help: 'Password values are not shown in tables.' },
-      { key: 'status', label: 'Status', kind: 'text' },
+      statusField('ACTIVE', 'INACTIVE'),
     ],
     columns: ['branchManagerId', 'firstName', 'lastName', 'email', 'phoneNo', 'status'],
     searchRoutes: commonStaffSearches('/branch-manager', '/branch-manager/search-by-branch-manager-id', 'Branch manager ID'),
@@ -184,8 +192,8 @@ export const RESOURCES: ResourceDefinition[] = [
       { key: 'subject', label: 'Subject', kind: 'text' },
       { key: 'description', label: 'Description', kind: 'textarea' },
       { key: 'requestDate', label: 'Request date', kind: 'datetime-local' },
-      { key: 'priority', label: 'Priority', kind: 'text' },
-      { key: 'status', label: 'Status', kind: 'text' },
+      { key: 'priority', label: 'Priority', kind: 'select', options: ['LOW', 'NORMAL', 'HIGH'] },
+      statusField('OPEN', 'IN_PROGRESS', 'RESOLVED'),
       { key: 'resolution', label: 'Resolution', kind: 'textarea' },
       { key: 'resolvedDate', label: 'Resolved date', kind: 'datetime-local' },
     ],
@@ -209,7 +217,7 @@ export const RESOURCES: ResourceDefinition[] = [
       { key: 'discountValue', label: 'Discount value', kind: 'number' },
       { key: 'startDate', label: 'Start date', kind: 'date' },
       { key: 'endDate', label: 'End date', kind: 'date' },
-      { key: 'status', label: 'Status', kind: 'text' },
+      statusField('ACTIVE', 'INACTIVE', 'EXPIRED'),
       { key: 'marketingOfficerId', label: 'Marketing officer', kind: 'relation', required: true, relation: relation('marketing-officers', 'marketingOfficerId', ['firstName', 'lastName']) },
     ],
     columns: ['promotionId', 'promotionName', 'discountType', 'discountValue', 'startDate', 'endDate', 'status'],
@@ -234,7 +242,7 @@ export const RESOURCES: ResourceDefinition[] = [
       { key: 'address', label: 'Address', kind: 'textarea' },
       { key: 'username', label: 'Username', kind: 'text' },
       { key: 'password', label: 'Password', kind: 'password', help: 'Leave blank to keep the current password.' },
-      { key: 'status', label: 'Status', kind: 'text' },
+      statusField('ACTIVE', 'INACTIVE'),
     ],
     columns: ['customerId', 'firstName', 'lastName', 'email', 'phoneNo', 'status'],
     searchRoutes: [
@@ -283,7 +291,7 @@ export const RESOURCES: ResourceDefinition[] = [
       { key: 'licenseNo', label: 'Licence number', kind: 'text' },
       { key: 'username', label: 'Username', kind: 'text' },
       { key: 'password', label: 'Password', kind: 'password', help: 'Password values are not shown in tables.' },
-      { key: 'status', label: 'Status', kind: 'text' },
+      statusField('ACTIVE', 'INACTIVE'),
     ],
     columns: ['pharmacistId', 'firstName', 'lastName', 'email', 'licenseNo', 'status'],
     searchRoutes: commonStaffSearches('/pharmacist', '/pharmacist/search-by-pharmacist-id', 'Pharmacist ID'),
@@ -302,7 +310,7 @@ export const RESOURCES: ResourceDefinition[] = [
       { key: 'phoneNo', label: 'Phone number', kind: 'text' },
       { key: 'username', label: 'Username', kind: 'text' },
       { key: 'password', label: 'Password', kind: 'password', help: 'Password values are not shown in tables.' },
-      { key: 'status', label: 'Status', kind: 'text' },
+      statusField('ACTIVE', 'INACTIVE'),
     ],
     columns: ['managerId', 'firstName', 'lastName', 'email', 'phoneNo', 'status'],
     searchRoutes: commonStaffSearches('/pharmacy-manager', '/pharmacy-manager/search-by-manager-id', 'Manager ID'),
@@ -321,7 +329,7 @@ export const RESOURCES: ResourceDefinition[] = [
       { key: 'phoneNo', label: 'Phone number', kind: 'text' },
       { key: 'username', label: 'Username', kind: 'text' },
       { key: 'password', label: 'Password', kind: 'password', help: 'Password values are not shown in tables.' },
-      { key: 'status', label: 'Status', kind: 'text' },
+      statusField('ACTIVE', 'INACTIVE'),
     ],
     columns: ['marketingOfficerId', 'firstName', 'lastName', 'email', 'phoneNo', 'status'],
     searchRoutes: commonStaffSearches('/marketing-officer', '/marketing-officer/search-by-marketing-officer-id', 'Officer ID'),
@@ -340,7 +348,7 @@ export const RESOURCES: ResourceDefinition[] = [
       { key: 'phoneNo', label: 'Phone number', kind: 'text' },
       { key: 'username', label: 'Username', kind: 'text' },
       { key: 'password', label: 'Password', kind: 'password', help: 'Password values are not shown in tables.' },
-      { key: 'status', label: 'Status', kind: 'text' },
+      statusField('ACTIVE', 'INACTIVE'),
     ],
     columns: ['supportOfficerId', 'firstName', 'lastName', 'email', 'phoneNo', 'status'],
     searchRoutes: commonStaffSearches('/customer-support-officer', '/customer-support-officer/search-by-support-officer-id', 'Officer ID'),
@@ -356,7 +364,7 @@ export const RESOURCES: ResourceDefinition[] = [
       { key: 'couponCode', label: 'Coupon code', kind: 'text' },
       { key: 'usageLimit', label: 'Usage limit', kind: 'number' },
       { key: 'usedCount', label: 'Used count', kind: 'number' },
-      { key: 'status', label: 'Status', kind: 'text' },
+      statusField('ACTIVE', 'INACTIVE', 'EXPIRED'),
     ],
     columns: ['couponId', 'promotionId', 'couponCode', 'usageLimit', 'usedCount', 'status'],
     searchRoutes: [
