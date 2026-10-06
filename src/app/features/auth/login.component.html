@@ -1,0 +1,33 @@
+<main class="auth-screen">
+  <section class="auth-card">
+    <a class="auth-brand" routerLink="/login" aria-label="MedOrder sign in">
+      <span class="auth-brand-mark">M</span>
+      <span><strong>MedOrder</strong><small>PHARMACY OPERATIONS</small></span>
+    </a>
+    <p class="auth-eyebrow">Welcome back</p>
+    <h1>Sign in to your account</h1>
+    <p class="auth-intro">Use your MedOrder username and password to continue.</p>
+
+    <div *ngIf="errorMessage" class="alert alert-danger py-2" role="alert">{{ errorMessage }}</div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input id="username" class="form-control" type="text" formControlName="username" autocomplete="username" required />
+        <div class="auth-field-error" *ngIf="form.controls.username.touched && form.controls.username.hasError('required')">Enter your username.</div>
+      </div>
+      <div class="mb-4">
+        <label for="password" class="form-label">Password</label>
+        <input id="password" class="form-control" type="password" formControlName="password" autocomplete="current-password" required />
+        <div class="auth-field-error" *ngIf="form.controls.password.touched && form.controls.password.hasError('required')">Enter your password.</div>
+      </div>
+      <button class="btn btn-primary auth-submit w-100" type="submit" [disabled]="loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+        {{ loading ? 'Signing in…' : 'Sign in' }}
+      </button>
+    </form>
+
+    <p class="auth-switch">New to MedOrder? <a routerLink="/register/customer">Create a customer account</a></p>
+    <p class="auth-switch auth-switch-secondary">Register staff <a routerLink="/register/staff">with a staff role</a></p>
+  </section>
+</main>

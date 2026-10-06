@@ -1,0 +1,261 @@
+<section class="customer-page">
+  <div class="customer-heading">
+    <div>
+      <p class="customer-eyebrow">Customer portal <span>/</span> {{ page === 'dashboard' ? 'Overview' : page }}</p>
+      <h1 *ngIf="page === 'dashboard'">Your health, made a little simpler.</h1>
+      <h1 *ngIf="page === 'medicines'">Find your medicine</h1>
+      <h1 *ngIf="page === 'orders'">Your orders</h1>
+      <h1 *ngIf="page === 'prescriptions'">Your prescriptions</h1>
+      <h1 *ngIf="page === 'support'">How can we help?</h1>
+      <p class="customer-subtitle" *ngIf="page === 'dashboard'">Welcome, {{ customerName }}. Here is your personal pharmacy overview.</p>
+      <p class="customer-subtitle" *ngIf="page === 'medicines'">Browse the medicine catalogue and add items to your order.</p>
+      <p class="customer-subtitle" *ngIf="page === 'orders'">Review the orders placed from your account.</p>
+      <p class="customer-subtitle" *ngIf="page === 'prescriptions'">Submit a prescription reference and follow its review status.</p>
+      <p class="customer-subtitle" *ngIf="page === 'support'">Send our support team a message and follow your requests.</p>
+    </div>
+    <button *ngIf="page === 'medicines'" type="button" class="btn btn-outline-success cart-trigger" (click)="showCart = true">
+      <span aria-hidden="true">▣</span> Cart <span class="cart-count">{{ cartCount }}</span>
+    </button>
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success customer-alert" role="status">{{ successMessage }}</div>
+  <div *ngIf="errorMessage" class="alert alert-danger customer-alert" role="alert">
+    {{ errorMessage }} <button type="button" class="alert-close" aria-label="Dismiss error" (click)="errorMessage = ''">×</button>
+  </div>
+
+  <div *ngIf="loading" class="customer-loading" role="status">
+    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Loading your information…
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <section *ngIf="page === 'dashboard'" class="customer-home">
+      <div class="welcome-panel">
+        <div>
+          <span class="welcome-label">YOUR PHARMACY, AT A GLANCE</span>
+          <h2>Welcome back, {{ customerName }}</h2>
+          <p>Manage medicines, orders, prescriptions and support requests from one place.</p>
+          <a routerLink="/customer/medicines" class="btn btn-light welcome-cta">Browse medicines <span aria-hidden="true">→</span></a>
+        </div>
+        <span class="welcome-art" aria-hidden="true">+</span>
+      </div>
+
+      <div class="customer-summary-grid">
+        <a routerLink="/customer/orders" class="customer-summary-card">
+          <span class="summary-icon summary-teal" aria-hidden="true">▤</span>
+          <span class="summary-caption">My Orders</span>
+          <strong>{{ orders.length }}</strong>
+          <small>All orders placed</small>
+        </a>
+        <a routerLink="/customer/orders" class="customer-summary-card">
+          <span class="summary-icon summary-amber" aria-hidden="true">◷</span>
+          <span class="summary-caption">Pending Orders</span>
+          <strong>{{ pendingOrderCount }}</strong>
+          <small>Awaiting fulfilment</small>
+        </a>
+        <a routerLink="/customer/prescriptions" class="customer-summary-card">
+          <span class="summary-icon summary-blue" aria-hidden="true">＋</span>
+          <span class="summary-caption">Prescriptions</span>
+          <strong>{{ prescriptions.length }}</strong>
+          <small>Uploaded for review</small>
+        </a>
+        <a routerLink="/customer/support" class="customer-summary-card">
+          <span class="summary-icon summary-violet" aria-hidden="true">♡</span>
+          <span class="summary-caption">Open Support Requests</span>
+          <strong>{{ openSupportCount }}</strong>
+          <small>Requests needing a reply</small>
+        </a>
+      </div>
+
+      <div class="customer-section-heading">
+        <div><p class="customer-eyebrow">Get started</p><h2>Your pharmacy shortcuts</h2></div>
+      </div>
+      <div class="customer-shortcuts">
+        <a routerLink="/customer/medicines"><span class="shortcut-symbol">⌕</span><strong>Browse medicines</strong><small>Search the medicine catalogue</small><span class="shortcut-arrow">→</span></a>
+        <a routerLink="/customer/prescriptions"><span class="shortcut-symbol shortcut-blue">＋</span><strong>My prescriptions</strong><small>Submit a prescription reference</small><span class="shortcut-arrow">→</span></a>
+        <a routerLink="/customer/support"><span class="shortcut-symbol shortcut-gold">♡</span><strong>Customer support</strong><small>Ask us for help</small><span class="shortcut-arrow">→</span></a>
+      </div>
+    </section>
+
+    <section *ngIf="page === 'medicines'" class="catalog-layout">
+      <div class="catalog-main">
+        <div class="catalog-toolbar">
+          <label class="catalog-search">
+            <span aria-hidden="true">⌕</span>
+            <input type="search" [(ngModel)]="medicineSearch" [ngModelOptions]="{ standalone: true }" placeholder="Search name, brand or category" aria-label="Search medicines" />
+          </label>
+          <span class="catalog-count">{{ visibleMedicines.length }} medicines</span>
+        </div>
+        <div *ngIf="catalogError" class="alert alert-warning customer-alert" role="status">{{ catalogError }}</div>
+        <div *ngIf="!medicines.length" class="customer-empty">
+          <span aria-hidden="true">＋</span><h2>Catalogue is empty</h2><p>Medicines returned by the pharmacy will appear here.</p>
+        </div>
+        <div *ngIf="medicines.length && !visibleMedicines.length" class="customer-empty compact-empty">
+          <h2>No matching medicines</h2><p>Try another search term.</p>
+        </div>
+        <div class="medicine-grid" *ngIf="visibleMedicines.length">
+          <article *ngFor="let medicine of visibleMedicines" class="medicine-card">
+            <div class="medicine-art" aria-hidden="true"><span>✚</span><small>MEDORDER</small></div>
+            <div class="medicine-content">
+              <span class="medicine-category">{{ medicine['category'] || 'Pharmacy essential' }}</span>
+              <span *ngIf="medicine['prescriptionRequired']" class="prescription-badge">Prescription required</span>
+              <h2>{{ medicine['medicineName'] || 'Medicine' }}</h2>
+              <p class="medicine-generic">{{ medicine['genericName'] || medicine['brandName'] || 'Quality pharmacy product' }}</p>
+              <p class="medicine-strength" *ngIf="medicine['strength']">{{ medicine['strength'] }}</p>
+              <p class="medicine-stock">{{ medicine['availableQuantity'] }} available across branches</p>
+              <div class="medicine-card-bottom">
+                <strong>{{ price(medicine['unitPrice']) | currency:'LKR':'symbol':'1.2-2' }}</strong>
+                <button type="button" class="btn btn-sm btn-success add-cart-button" (click)="addToCart(medicine)">Add <span aria-hidden="true">+</span></button>
+              </div>
+              <button type="button" class="medicine-details-link" (click)="selectedMedicine = medicine">View details</button>
+            </div>
+          </article>
+        </div>
+      </div>
+      <aside class="cart-preview">
+        <div class="cart-preview-heading"><h2>Your cart</h2><span>{{ cartCount }}</span></div>
+        <div *ngIf="!cart.length" class="cart-preview-empty">Your cart is waiting for its first item.</div>
+        <div *ngFor="let line of cart" class="cart-preview-line">
+          <span>{{ line.medicine['medicineName'] }}</span><strong>{{ line.quantity }} × {{ price(line.medicine['unitPrice']) | currency:'LKR':'symbol':'1.2-2' }}</strong>
+        </div>
+        <div class="cart-preview-total" *ngIf="cart.length"><span>Subtotal</span><strong>{{ cartTotal | currency:'LKR':'symbol':'1.2-2' }}</strong></div>
+        <button type="button" class="btn btn-success w-100 mt-3" [disabled]="!cart.length" (click)="showCart = true">Review cart</button>
+      </aside>
+    </section>
+
+    <section *ngIf="page === 'orders'" class="customer-panel">
+      <div class="customer-panel-heading"><div><h2>Order history</h2><p>Orders for your customer account.</p></div><button type="button" class="btn btn-outline-secondary btn-sm" (click)="loadPage()">Refresh</button></div>
+      <div *ngIf="!orders.length" class="customer-empty compact-empty"><h2>No orders yet</h2><p>Your submitted orders will appear here.</p><a routerLink="/customer/medicines" class="btn btn-success btn-sm">Browse medicines</a></div>
+      <div class="table-responsive" *ngIf="orders.length">
+        <table class="table customer-table align-middle">
+          <thead><tr><th>Order ID</th><th>Order date</th><th>Status</th><th>Total</th><th>Delivery address</th></tr></thead>
+          <tbody><tr *ngFor="let order of orders">
+            <td class="customer-primary-cell">#{{ order['orderId'] }}</td>
+            <td>{{ dateLabel(order['orderDate'], 'medium') }}</td>
+            <td><span class="customer-status" [ngClass]="statusClass(order['orderStatus'])">{{ order['orderStatus'] || 'Unknown' }}</span></td>
+            <td>{{ price(order['totalAmount']) | currency:'LKR':'symbol':'1.2-2' }}</td>
+            <td class="address-cell">{{ order['deliveryAddress'] || '—' }}</td>
+          </tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section *ngIf="page === 'prescriptions'" class="customer-two-column">
+      <article class="customer-panel upload-panel">
+        <div class="customer-panel-heading"><div><h2>Submit a prescription</h2><p>Provide a date and file reference for pharmacist review.</p></div></div>
+        <div *ngIf="uploadSuccess" class="alert alert-success customer-alert" role="status">{{ uploadSuccess }}</div>
+        <div *ngIf="uploadError" class="alert alert-danger customer-alert" role="alert">{{ uploadError }}</div>
+        <form [formGroup]="prescriptionForm" (ngSubmit)="uploadPrescription()" novalidate>
+          <div class="mb-3">
+            <label for="prescriptionDate" class="form-label">Prescription date</label>
+            <input id="prescriptionDate" class="form-control" type="date" formControlName="prescriptionDate" required />
+            <small *ngIf="prescriptionForm.controls.prescriptionDate.touched && prescriptionForm.controls.prescriptionDate.invalid" class="customer-field-error">Choose the date on the prescription.</small>
+          </div>
+          <div class="mb-3">
+            <label for="prescriptionFile" class="form-label">File or reference</label>
+            <input id="prescriptionFile" class="form-control" type="text" formControlName="prescriptionFile" placeholder="File name, URL or reference" required />
+            <small class="form-text">The current backend accepts a text reference; it does not accept prescription file uploads.</small>
+            <small *ngIf="prescriptionForm.controls.prescriptionFile.touched && prescriptionForm.controls.prescriptionFile.invalid" class="customer-field-error">Enter a file name, URL or reference.</small>
+          </div>
+          <button type="submit" class="btn btn-success" [disabled]="saving"><span *ngIf="saving" class="spinner-border spinner-border-sm me-2"></span>{{ saving ? 'Submitting…' : 'Submit prescription' }}</button>
+        </form>
+      </article>
+      <article class="customer-panel records-panel">
+        <div class="customer-panel-heading"><div><h2>Prescription status</h2><p>Your latest submissions and pharmacist decisions.</p></div></div>
+        <div *ngIf="!prescriptions.length" class="customer-empty compact-empty"><h2>No prescriptions</h2><p>Submit a prescription to track its review here.</p></div>
+        <div class="table-responsive" *ngIf="prescriptions.length">
+          <table class="table customer-table align-middle">
+            <thead><tr><th>Date</th><th>File / reference</th><th>Status</th><th>Reviewed</th><th>Rejection reason</th></tr></thead>
+            <tbody><tr *ngFor="let prescription of prescriptions">
+              <td>{{ dateLabel(prescription['prescriptionDate'], 'mediumDate') }}</td>
+              <td>{{ prescription['prescriptionFile'] || '—' }}</td>
+              <td><span class="customer-status" [ngClass]="statusClass(prescription['status'])">{{ prescription['status'] || 'Unknown' }}</span></td>
+              <td>{{ dateLabel(prescription['reviewedDate'], 'medium') }}</td>
+              <td>{{ prescription['rejectionReason'] || '—' }}</td>
+            </tr></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section *ngIf="page === 'support'" class="customer-two-column">
+      <article class="customer-panel">
+        <div class="customer-panel-heading"><div><h2>Contact support</h2><p>Tell us what you need help with.</p></div></div>
+        <div *ngIf="supportSuccess" class="alert alert-success customer-alert" role="status">{{ supportSuccess }}</div>
+        <div *ngIf="supportError" class="alert alert-danger customer-alert" role="alert">{{ supportError }}</div>
+        <form [formGroup]="supportForm" (ngSubmit)="createSupportRequest()" novalidate>
+          <div class="mb-3">
+            <label for="supportSubject" class="form-label">Subject</label>
+            <input id="supportSubject" class="form-control" formControlName="subject" placeholder="What do you need help with?" required />
+            <small *ngIf="supportForm.controls.subject.touched && supportForm.controls.subject.invalid" class="customer-field-error">Enter a subject.</small>
+          </div>
+          <div class="mb-3">
+            <label for="supportDescription" class="form-label">Details</label>
+            <textarea id="supportDescription" class="form-control" formControlName="description" rows="5" placeholder="Add a few details so we can help." required></textarea>
+            <small *ngIf="supportForm.controls.description.touched && supportForm.controls.description.invalid" class="customer-field-error">Enter some details.</small>
+          </div>
+          <button type="submit" class="btn btn-success" [disabled]="saving"><span *ngIf="saving" class="spinner-border spinner-border-sm me-2"></span>{{ saving ? 'Sending…' : 'Send request' }}</button>
+        </form>
+      </article>
+      <article class="customer-panel">
+        <div class="customer-panel-heading"><div><h2>Your support requests</h2><p>Updates from the customer support team.</p></div></div>
+        <div *ngIf="!supportRequests.length" class="customer-empty compact-empty"><h2>No support requests</h2><p>Requests you create will be listed here.</p></div>
+        <div *ngFor="let request of supportRequests" class="support-request-card">
+          <div class="support-request-top"><strong>{{ request['subject'] || 'Support request' }}</strong><span class="customer-status" [ngClass]="statusClass(request['status'])">{{ request['status'] || 'Unknown' }}</span></div>
+          <small>Request #{{ request['supportId'] }} · {{ dateLabel(request['requestDate'], 'medium') }}</small>
+          <p>{{ request['description'] }}</p>
+          <div *ngIf="request['resolution']" class="support-resolution"><strong>Resolution</strong><p>{{ request['resolution'] }}</p></div>
+        </div>
+      </article>
+    </section>
+  </ng-container>
+</section>
+
+<div class="customer-modal-backdrop" *ngIf="showCart" (click)="showCart = false">
+  <section class="customer-modal cart-modal" role="dialog" aria-modal="true" aria-label="Your shopping cart" (click)="$event.stopPropagation()">
+    <header class="customer-modal-heading"><div><p class="customer-eyebrow">Medicine order</p><h2>Your cart</h2></div><button type="button" class="customer-modal-close" aria-label="Close cart" (click)="showCart = false">×</button></header>
+    <div *ngIf="checkoutSuccess" class="alert alert-success customer-alert" role="status">{{ checkoutSuccess }} <a routerLink="/customer/orders" (click)="showCart = false">View orders</a></div>
+    <div *ngIf="checkoutError" class="alert alert-danger customer-alert" role="alert">{{ checkoutError }}</div>
+    <div *ngIf="!cart.length" class="customer-empty compact-empty"><h2>Your cart is empty</h2><p>Add medicines to start an order.</p></div>
+    <ng-container *ngIf="cart.length">
+      <div class="cart-line-list">
+        <div *ngFor="let line of cart" class="cart-line">
+          <div class="cart-line-description"><strong>{{ line.medicine['medicineName'] }}</strong><small>{{ line.medicine['strength'] || line.medicine['genericName'] || 'Medicine' }}</small></div>
+          <input class="form-control cart-quantity" type="number" min="1" [max]="line.medicine['availableQuantity']" step="1" [value]="line.quantity" [attr.aria-label]="'Quantity for ' + line.medicine['medicineName']" (change)="updateQuantity($any(line.medicine['medicineId']), $any($event.target).value)" />
+          <strong>{{ price(line.medicine['unitPrice']) * line.quantity | currency:'LKR':'symbol':'1.2-2' }}</strong>
+          <button type="button" class="remove-cart-item" [attr.aria-label]="'Remove ' + line.medicine['medicineName']" (click)="removeFromCart($any(line.medicine['medicineId']))">Remove</button>
+        </div>
+      </div>
+      <div class="cart-total-row"><span>Subtotal</span><strong>{{ cartTotal | currency:'LKR':'symbol':'1.2-2' }}</strong></div>
+      <form [formGroup]="checkoutForm" (ngSubmit)="placeOrder()" novalidate>
+        <div class="mb-3">
+          <label for="deliveryAddress" class="form-label">Delivery address</label>
+          <textarea id="deliveryAddress" class="form-control" rows="3" formControlName="deliveryAddress" placeholder="Enter the address for this order" required></textarea>
+          <small *ngIf="checkoutForm.controls.deliveryAddress.touched && checkoutForm.controls.deliveryAddress.invalid" class="customer-field-error">Enter a delivery address.</small>
+        </div>
+        <button type="submit" class="btn btn-success w-100" [disabled]="saving || orderSubmissionBlocked">
+          <span *ngIf="saving" class="spinner-border spinner-border-sm me-2"></span>
+          {{ saving ? 'Placing order…' : orderSubmissionBlocked ? 'Order needs attention' : 'Place order' }}
+        </button>
+      </form>
+    </ng-container>
+  </section>
+</div>
+
+<div class="customer-modal-backdrop" *ngIf="selectedMedicine" (click)="selectedMedicine = null">
+  <section class="customer-modal medicine-modal" role="dialog" aria-modal="true" aria-label="Medicine details" (click)="$event.stopPropagation()">
+    <header class="customer-modal-heading"><div><p class="customer-eyebrow">Medicine details</p><h2>{{ selectedMedicine['medicineName'] }}</h2></div><button type="button" class="customer-modal-close" aria-label="Close medicine details" (click)="selectedMedicine = null">×</button></header>
+    <dl class="medicine-detail-list">
+      <div *ngFor="let detail of [
+        { label: 'Generic name', value: selectedMedicine['genericName'] },
+        { label: 'Brand', value: selectedMedicine['brandName'] },
+        { label: 'Category', value: selectedMedicine['category'] },
+        { label: 'Strength', value: selectedMedicine['strength'] },
+        { label: 'Manufacturer', value: selectedMedicine['manufacturer'] },
+        { label: 'Expiry date', value: selectedMedicine['expiryDate'] },
+        { label: 'Prescription required', value: selectedMedicine['prescriptionRequired'] ? 'Yes' : 'No' }
+      ]"><dt>{{ detail.label }}</dt><dd>{{ detail.value || '—' }}</dd></div>
+      <div class="medicine-detail-description"><dt>Description</dt><dd>{{ selectedMedicine['description'] || 'No additional description provided.' }}</dd></div>
+    </dl>
+    <div class="medicine-modal-bottom"><strong>{{ price(selectedMedicine['unitPrice']) | currency:'LKR':'symbol':'1.2-2' }}</strong><button type="button" class="btn btn-success" (click)="addToCart(selectedMedicine); selectedMedicine = null">Add to cart</button></div>
+  </section>
+</div>

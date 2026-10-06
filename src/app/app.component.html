@@ -1,10 +1,14 @@
+<ng-container *ngIf="isPublicPage; else authenticatedShell">
+  <router-outlet></router-outlet>
+</ng-container>
+<ng-template #authenticatedShell>
 <div class="app-frame">
   <aside class="sidebar" [class.sidebar-open]="mobileNavOpen">
-    <a routerLink="/dashboard" class="brand-lockup" aria-label="MedOrder overview">
+    <a [routerLink]="homePath" class="brand-lockup" aria-label="MedOrder home">
       <span class="brand-mark"><span>M</span><i></i></span>
       <span class="brand-copy"><strong>MedOrder</strong><small>PHARMACY OPERATIONS</small></span>
     </a>
-    <div class="workspace-label"><span class="workspace-dot"></span> Operations workspace</div>
+    <div class="workspace-label"><span class="workspace-dot"></span> {{ roleLabel }}</div>
     <nav class="side-navigation" aria-label="Main navigation">
       <section *ngFor="let group of navigation" class="nav-group">
         <h2>{{ group.title }}</h2>
@@ -16,7 +20,7 @@
     <div class="sidebar-footer">
       <span class="footer-caption">API TARGET</span>
       <strong>localhost:8080</strong>
-      <span class="footer-status"><i></i> No sign-in API configured</span>
+      <span class="footer-status"><i></i> Signed in as {{ currentUser?.username }}</span>
     </div>
   </aside>
   <div class="mobile-scrim" *ngIf="mobileNavOpen" (click)="mobileNavOpen = false"></div>
@@ -24,9 +28,13 @@
     <header class="topbar">
       <button type="button" class="menu-toggle" (click)="toggleNavigation()" [attr.aria-expanded]="mobileNavOpen" aria-label="Toggle navigation" title="Toggle navigation"><span></span><span></span><span></span></button>
       <div class="topbar-breadcrumb"><span>MEDORDER</span><span class="breadcrumb-separator">/</span><strong>{{ currentTitle }}</strong></div>
-      <div class="topbar-meta"><span class="environment-tag">LOCAL FRONTEND</span><span class="workspace-avatar" aria-hidden="true">+</span></div>
+      <div class="topbar-meta">
+        <span class="environment-tag">{{ currentUser?.username }}</span>
+        <button type="button" class="logout-button" (click)="logout()">Log out</button>
+      </div>
     </header>
     <main class="route-content"><router-outlet></router-outlet></main>
     <footer class="app-footer"><span>Medicine &amp; Drug Ordering System</span><span>Frontend workspace · API at localhost:8080</span></footer>
   </div>
 </div>
+</ng-template>

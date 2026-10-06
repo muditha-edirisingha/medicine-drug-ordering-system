@@ -1,0 +1,61 @@
+<main class="auth-screen auth-screen-register">
+  <section class="auth-card auth-card-wide">
+    <a class="auth-brand" routerLink="/login" aria-label="MedOrder sign in">
+      <span class="auth-brand-mark">M</span>
+      <span><strong>MedOrder</strong><small>PHARMACY OPERATIONS</small></span>
+    </a>
+    <p class="auth-eyebrow">Customer account</p>
+    <h1>Create your account</h1>
+    <p class="auth-intro">Register to use the pharmacy ordering system.</p>
+
+    <div *ngIf="successMessage" class="alert alert-success py-2" role="status">
+      {{ successMessage }} <a routerLink="/login" class="alert-link">Sign in</a>
+    </div>
+    <div *ngIf="errorMessage" class="alert alert-danger py-2" role="alert">{{ errorMessage }}</div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="auth-form-grid">
+        <div class="mb-3">
+          <label for="firstName" class="form-label">First name</label>
+          <input id="firstName" class="form-control" formControlName="firstName" autocomplete="given-name" required />
+          <div class="auth-field-error" *ngIf="form.controls.firstName.touched && form.controls.firstName.invalid">Enter your first name.</div>
+        </div>
+        <div class="mb-3">
+          <label for="lastName" class="form-label">Last name</label>
+          <input id="lastName" class="form-control" formControlName="lastName" autocomplete="family-name" required />
+          <div class="auth-field-error" *ngIf="form.controls.lastName.touched && form.controls.lastName.invalid">Enter your last name.</div>
+        </div>
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input id="email" class="form-control" type="email" formControlName="email" autocomplete="email" required />
+          <div class="auth-field-error" *ngIf="form.controls.email.touched && form.controls.email.invalid">Enter a valid email address.</div>
+        </div>
+        <div class="mb-3">
+          <label for="phoneNo" class="form-label">Phone number</label>
+          <input id="phoneNo" class="form-control" type="tel" formControlName="phoneNo" autocomplete="tel" required />
+          <div class="auth-field-error" *ngIf="form.controls.phoneNo.touched && form.controls.phoneNo.invalid">Enter your phone number.</div>
+        </div>
+        <div class="mb-3 auth-form-full">
+          <label for="address" class="form-label">Address</label>
+          <textarea id="address" class="form-control" formControlName="address" rows="2" autocomplete="street-address" required></textarea>
+          <div class="auth-field-error" *ngIf="form.controls.address.touched && form.controls.address.invalid">Enter your address.</div>
+        </div>
+        <div class="mb-3">
+          <label for="username" class="form-label">Username</label>
+          <input id="username" class="form-control" formControlName="username" autocomplete="username" required />
+          <div class="auth-field-error" *ngIf="form.controls.username.touched && form.controls.username.invalid">Choose a username.</div>
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <input id="password" class="form-control" type="password" formControlName="password" autocomplete="new-password" required />
+          <div class="auth-field-error" *ngIf="form.controls.password.touched && form.controls.password.invalid">Choose a password.</div>
+        </div>
+      </div>
+      <button class="btn btn-primary auth-submit w-100" type="submit" [disabled]="loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+        {{ loading ? 'Creating account…' : 'Create customer account' }}
+      </button>
+    </form>
+    <p class="auth-switch">Already registered? <a routerLink="/login">Sign in</a></p>
+  </section>
+</main>
