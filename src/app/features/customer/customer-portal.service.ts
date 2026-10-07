@@ -158,6 +158,31 @@ export class CustomerPortalService {
     );
   }
 
+  deleteOrder(orderId: number): Observable<unknown> {
+    return this.api.delete<unknown>(`/order/delete-by-id/${encodeURIComponent(orderId)}`);
+  }
+
+  addOrderItem(orderId: number, medicine: ApiRecord, quantity: number): Observable<unknown> {
+    const definition = RESOURCE_BY_KEY.get('order-items');
+    if (!definition) {
+      return throwError(() => new Error('Order item API configuration is unavailable.'));
+    }
+
+    const medicineId = Number(medicine['medicineId']);
+    const unitPrice = Number(medicine['unitPrice']);
+    if (!Number.isFinite(medicineId) || !Number.isFinite(unitPrice) || quantity <= 0) {
+      return throwError(() => new Error('Select a valid medicine and quantity before adding it to the order.'));
+    }
+
+    return this.resources.create(definition, {
+      orderId,
+      medicineId,
+      quantity,
+      unitPrice,
+      subTotal: unitPrice * quantity,
+    });
+  }
+
   createPrescription(request: CustomerPrescriptionRequest): Observable<unknown> {
     const definition = RESOURCE_BY_KEY.get('prescriptions');
     if (!definition) return throwError(() => new Error('Prescription API configuration is unavailable.'));

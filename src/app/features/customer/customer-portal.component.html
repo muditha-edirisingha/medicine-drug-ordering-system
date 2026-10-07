@@ -127,13 +127,19 @@
       <div *ngIf="!orders.length" class="customer-empty compact-empty"><h2>No orders yet</h2><p>Your submitted orders will appear here.</p><a routerLink="/customer/medicines" class="btn btn-success btn-sm">Browse medicines</a></div>
       <div class="table-responsive" *ngIf="orders.length">
         <table class="table customer-table align-middle">
-          <thead><tr><th>Order ID</th><th>Order date</th><th>Status</th><th>Total</th><th>Delivery address</th></tr></thead>
+          <thead><tr><th>Order ID</th><th>Order date</th><th>Status</th><th>Total</th><th>Delivery address</th><th>Actions</th></tr></thead>
           <tbody><tr *ngFor="let order of orders">
             <td class="customer-primary-cell">#{{ order['orderId'] }}</td>
             <td>{{ dateLabel(order['orderDate'], 'medium') }}</td>
             <td><span class="customer-status" [ngClass]="statusClass(order['orderStatus'])">{{ order['orderStatus'] || 'Unknown' }}</span></td>
             <td>{{ price(order['totalAmount']) | currency:'LKR':'symbol':'1.2-2' }}</td>
             <td class="address-cell">{{ order['deliveryAddress'] || '—' }}</td>
+            <td>
+              <div class="d-flex gap-2 flex-wrap">
+                <button *ngIf="canAddItemsToOrder(order)" type="button" class="btn btn-outline-success btn-sm" (click)="openAddItems(order)">Add Items</button>
+                <button *ngIf="canCancelOrder(order)" type="button" class="btn btn-outline-danger btn-sm" (click)="cancelOrder(order)">Cancel Order</button>
+              </div>
+            </td>
           </tr></tbody>
         </table>
       </div>
@@ -209,6 +215,35 @@
     </section>
   </ng-container>
 </section>
+
+<div class="customer-modal-backdrop" *ngIf="addItemsOrder" (click)="closeAddItems()">
+  <section class="customer-modal cart-modal" role="dialog" aria-modal="true" aria-label="Add items to an order" (click)="$event.stopPropagation()">
+    <header class="customer-modal-heading"><div><p class="customer-eyebrow">Order items</p><h2>Add items to order #{{ addItemsOrder['orderId'] }}</h2></div><button type="button" class="customer-modal-close" aria-label="Close add items" (click)="closeAddItems()">×</button></header>
+    <div *ngIf="addItemsError" class="alert alert-danger customer-alert" role="alert">{{ addItemsError }}</div>
+    <div class="mb-3">
+      <label for="add-items-medicine" class="form-label">Medicine</label>
+      <select id="add-items-medicine" class="form-select" [ngModel]="addItemsMedicineId" (ngModelChange)="addItemsMedicineId = +$event" name="addItemsMedicineId">
+        <option [ngValue]="null">Choose a medicine</option>
+        <option *ngFor="let medicine of medicines" [ngValue]="medicine['medicineId']">{{ medicine['medicineName'] }} ({{ price(medicine['unitPrice']) | currency:'LKR':'symbol':'1.2-2' }})</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="add-items-quantity" class="form-label">Quantity</label>
+      <input id="add-items-quantity" class="form-control" type="number" min="1" [(ngModel)]="addItemsQuantity" name="addItemsQuantity" />
+    </div>
+    <div *ngIf="addItemsSelectedMedicine" class="customer-order-summary">
+      <span>Subtotal</span>
+      <strong>{{ addItemsSubtotal | currency:'LKR':'symbol':'1.2-2' }}</strong>
+    </div>
+    <div class="d-flex justify-content-end gap-2 mt-3">
+      <button type="button" class="btn btn-outline-secondary" (click)="closeAddItems()">Cancel</button>
+      <button type="button" class="btn btn-success" [disabled]="addItemsSubmitting || !addItemsSelectedMedicine" (click)="submitAddItems()">
+        <span *ngIf="addItemsSubmitting" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+        {{ addItemsSubmitting ? 'Adding…' : 'Add item' }}
+      </button>
+    </div>
+  </section>
+</div>
 
 <div class="customer-modal-backdrop" *ngIf="showCart" (click)="showCart = false">
   <section class="customer-modal cart-modal" role="dialog" aria-modal="true" aria-label="Your shopping cart" (click)="$event.stopPropagation()">

@@ -71,6 +71,11 @@
         <span class="order-reference">#{{ selectedOrder.orderId }}</span>
       </div>
 
+      <div class="detail-actions mb-3" *ngIf="canDeleteOrder(selectedOrder) || canAddItemsToOrder(selectedOrder)">
+        <button *ngIf="canAddItemsToOrder(selectedOrder)" type="button" class="btn btn-sm btn-outline-success me-2" (click)="openAddOrderItem(selectedOrder)">Add Items</button>
+        <button *ngIf="canDeleteOrder(selectedOrder)" type="button" class="btn btn-sm btn-outline-danger" (click)="deleteOrder(selectedOrder)">Delete Order</button>
+      </div>
+
       <dl class="detail-grid">
         <div class="detail-item">
           <dt>Order ID</dt>
@@ -137,3 +142,32 @@
     </aside>
   </div>
 </section>
+
+<div class="customer-modal-backdrop" *ngIf="addItemOrder" (click)="closeAddOrderItem()">
+  <section class="customer-modal cart-modal" role="dialog" aria-modal="true" aria-label="Add order item" (click)="$event.stopPropagation()">
+    <header class="customer-modal-heading"><div><p class="customer-eyebrow">Order item</p><h2>Add item to order #{{ addItemOrder.orderId }}</h2></div><button type="button" class="customer-modal-close" aria-label="Close add order item" (click)="closeAddOrderItem()">×</button></header>
+    <div *ngIf="addItemError" class="alert alert-danger status-message" role="alert">{{ addItemError }}</div>
+    <div class="mb-3">
+      <label for="manager-add-item-medicine" class="form-label">Medicine</label>
+      <select id="manager-add-item-medicine" class="form-select" [value]="addItemMedicineId ?? ''" (change)="addItemMedicineId = +$any($event.target).value || null">
+        <option value="">Choose a medicine</option>
+        <option *ngFor="let medicine of medicines" [value]="medicine.medicineId">{{ medicine.medicineName }} ({{ medicine.unitPrice | currency:'LKR':'symbol':'1.2-2' }})</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="manager-add-item-quantity" class="form-label">Quantity</label>
+      <input id="manager-add-item-quantity" class="form-control" type="number" min="1" [value]="addItemQuantity" (input)="addItemQuantity = +$any($event.target).value || 0" />
+    </div>
+    <div *ngIf="selectedAddMedicine" class="customer-order-summary">
+      <span>Subtotal</span>
+      <strong>{{ addItemSubtotal | currency:'LKR':'symbol':'1.2-2' }}</strong>
+    </div>
+    <div class="d-flex justify-content-end gap-2 mt-3">
+      <button type="button" class="btn btn-outline-secondary" (click)="closeAddOrderItem()">Cancel</button>
+      <button type="button" class="btn btn-success" [disabled]="addItemSaving || !selectedAddMedicine" (click)="submitOrderItem()">
+        <span *ngIf="addItemSaving" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+        {{ addItemSaving ? 'Adding…' : 'Add item' }}
+      </button>
+    </div>
+  </section>
+</div>

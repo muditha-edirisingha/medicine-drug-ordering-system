@@ -16,7 +16,16 @@ export interface ResourceField {
   options?: string[];
   relation?: RelationshipOption;
   help?: string;
+  min?: number;
+  max?: number;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string | RegExp;
+  custom?: 'sri-lankan-phone' | 'positive-number' | 'non-negative-number' | 'future-date';
+  validationMessage?: string;
 }
+
+export const SRI_LANKAN_PHONE_PATTERN = /^0\d{9}$/;
 
 export interface SearchRoute {
   label: string;
@@ -71,10 +80,10 @@ export const RESOURCES: ResourceDefinition[] = [
     deletePath: id => `/order/delete-by-id/${encodeURIComponent(id)}`,
     fields: [
       { key: 'customerId', label: 'Customer', kind: 'relation', required: true, relation: relation('customers', 'customerId', ['firstName', 'lastName', 'email']) },
-      { key: 'orderDate', label: 'Order date', kind: 'datetime-local' },
-      { key: 'orderStatus', label: 'Order status', kind: 'text' },
-      { key: 'totalAmount', label: 'Total amount', kind: 'number' },
-      { key: 'deliveryAddress', label: 'Delivery address', kind: 'textarea' },
+      { key: 'orderDate', label: 'Order date', kind: 'datetime-local', validationMessage: 'Order date is required.' },
+      { key: 'orderStatus', label: 'Order status', kind: 'text', minLength: 1, validationMessage: 'Order status is required.' },
+      { key: 'totalAmount', label: 'Total amount', kind: 'number', min: 0, custom: 'non-negative-number', validationMessage: 'Total amount must be 0 or more.' },
+      { key: 'deliveryAddress', label: 'Delivery address', kind: 'textarea', minLength: 1, validationMessage: 'Delivery address is required.' },
     ],
     columns: ['orderId', 'customerId', 'orderDate', 'orderStatus', 'totalAmount'],
     searchRoutes: [{ label: 'Order ID', path: '/order/search-by-order-id' }],
@@ -88,9 +97,9 @@ export const RESOURCES: ResourceDefinition[] = [
     fields: [
       { key: 'orderId', label: 'Order', kind: 'relation', required: true, relation: relation('orders', 'orderId', ['orderId', 'customerId']) },
       { key: 'medicineId', label: 'Medicine', kind: 'relation', required: true, relation: relation('medicines', 'medicineId', ['medicineName', 'strength']) },
-      { key: 'quantity', label: 'Quantity', kind: 'number' },
-      { key: 'unitPrice', label: 'Unit price', kind: 'number' },
-      { key: 'subTotal', label: 'Subtotal', kind: 'number' },
+      { key: 'quantity', label: 'Quantity', kind: 'number', min: 1, custom: 'positive-number', validationMessage: 'Quantity must be greater than 0.' },
+      { key: 'unitPrice', label: 'Unit price', kind: 'number', min: 0, custom: 'non-negative-number', validationMessage: 'Unit price must be 0 or more.' },
+      { key: 'subTotal', label: 'Subtotal', kind: 'number', min: 0, custom: 'non-negative-number', validationMessage: 'Subtotal must be 0 or more.' },
     ],
     columns: ['orderItemId', 'orderId', 'medicineId', 'quantity', 'unitPrice', 'subTotal'],
     searchRoutes: [{ label: 'Order item ID', path: '/orderItem/search-by-order-item-id' }],
@@ -104,9 +113,9 @@ export const RESOURCES: ResourceDefinition[] = [
     fields: [
       { key: 'customerId', label: 'Customer', kind: 'relation', required: true, relation: relation('customers', 'customerId', ['firstName', 'lastName']) },
       { key: 'pharmacistId', label: 'Pharmacist', kind: 'relation', relation: relation('pharmacists', 'pharmacistId', ['firstName', 'lastName']) },
-      { key: 'prescriptionDate', label: 'Prescription date', kind: 'date' },
-      { key: 'uploadDate', label: 'Upload date', kind: 'datetime-local' },
-      { key: 'prescriptionFile', label: 'Prescription file reference', kind: 'text' },
+      { key: 'prescriptionDate', label: 'Prescription date', kind: 'date', validationMessage: 'Prescription date is required.' },
+      { key: 'uploadDate', label: 'Upload date', kind: 'datetime-local', validationMessage: 'Upload date is required.' },
+      { key: 'prescriptionFile', label: 'Prescription file reference', kind: 'text', minLength: 1, validationMessage: 'Prescription file reference is required.' },
       statusField('PENDING', 'APPROVED', 'REJECTED'),
       { key: 'reviewedDate', label: 'Reviewed date', kind: 'datetime-local' },
       { key: 'rejectionReason', label: 'Rejection reason', kind: 'textarea' },
@@ -128,9 +137,9 @@ export const RESOURCES: ResourceDefinition[] = [
     fields: [
       { key: 'medicineId', label: 'Medicine', kind: 'relation', required: true, relation: relation('medicines', 'medicineId', ['medicineName', 'strength']) },
       { key: 'branchId', label: 'Branch', kind: 'relation', required: true, relation: relation('branches', 'branchId', ['branchName']) },
-      { key: 'stockQuantity', label: 'Stock quantity', kind: 'number' },
-      { key: 'reorderLevel', label: 'Reorder level', kind: 'number' },
-      { key: 'lastUpdated', label: 'Last updated', kind: 'datetime-local' },
+      { key: 'stockQuantity', label: 'Stock quantity', kind: 'number', min: 0, custom: 'non-negative-number', validationMessage: 'Stock quantity must be 0 or more.' },
+      { key: 'reorderLevel', label: 'Reorder level', kind: 'number', min: 0, custom: 'non-negative-number', validationMessage: 'Reorder level must be 0 or more.' },
+      { key: 'lastUpdated', label: 'Last updated', kind: 'datetime-local', validationMessage: 'Last updated is required.' },
     ],
     columns: ['inventoryId', 'medicineId', 'branchId', 'stockQuantity', 'reorderLevel', 'lastUpdated'],
     searchRoutes: [
@@ -147,13 +156,13 @@ export const RESOURCES: ResourceDefinition[] = [
     deletePath: id => `/branch/delete/${encodeURIComponent(id)}`,
     fields: [
       { key: 'managerId', label: 'Branch manager', kind: 'relation', required: true, relation: relation('branch-managers', 'branchManagerId', ['firstName', 'lastName']) },
-      { key: 'branchName', label: 'Branch name', kind: 'text' },
-      { key: 'phoneNo', label: 'Phone number', kind: 'text' },
-      { key: 'email', label: 'Email', kind: 'email' },
+      { key: 'branchName', label: 'Branch name', kind: 'text', required: true, minLength: 1, validationMessage: 'Branch name is required.' },
+      { key: 'phoneNo', label: 'Phone number', kind: 'text', pattern: SRI_LANKAN_PHONE_PATTERN, validationMessage: 'Phone number must be in Sri Lankan format: 0712345678.' },
+      { key: 'email', label: 'Email', kind: 'email', validationMessage: 'Enter a valid email address.' },
       { key: 'openingTime', label: 'Opening time', kind: 'time' },
       { key: 'closingTime', label: 'Closing time', kind: 'time' },
       statusField('ACTIVE', 'CLOSED'),
-      { key: 'address', label: 'Address', kind: 'textarea' },
+      { key: 'address', label: 'Address', kind: 'textarea', required: true, minLength: 1, validationMessage: 'Address is required.' },
     ],
     columns: ['branchId', 'branchName', 'managerId', 'phoneNo', 'status'],
     searchRoutes: [
@@ -189,10 +198,10 @@ export const RESOURCES: ResourceDefinition[] = [
     fields: [
       { key: 'customerId', label: 'Customer', kind: 'relation', required: true, relation: relation('customers', 'customerId', ['firstName', 'lastName']) },
       { key: 'supportOfficerId', label: 'Support officer', kind: 'relation', relation: relation('customer-support-officers', 'supportOfficerId', ['firstName', 'lastName']) },
-      { key: 'subject', label: 'Subject', kind: 'text' },
-      { key: 'description', label: 'Description', kind: 'textarea' },
-      { key: 'requestDate', label: 'Request date', kind: 'datetime-local' },
-      { key: 'priority', label: 'Priority', kind: 'select', options: ['LOW', 'NORMAL', 'HIGH'] },
+      { key: 'subject', label: 'Subject', kind: 'text', required: true, minLength: 1, validationMessage: 'Subject is required.' },
+      { key: 'description', label: 'Description', kind: 'textarea', required: true, minLength: 1, validationMessage: 'Description is required.' },
+      { key: 'requestDate', label: 'Request date', kind: 'datetime-local', required: true, validationMessage: 'Request date is required.' },
+      { key: 'priority', label: 'Priority', kind: 'select', required: true, options: ['LOW', 'NORMAL', 'HIGH'], validationMessage: 'Priority is required.' },
       statusField('OPEN', 'IN_PROGRESS', 'RESOLVED'),
       { key: 'resolution', label: 'Resolution', kind: 'textarea' },
       { key: 'resolvedDate', label: 'Resolved date', kind: 'datetime-local' },
@@ -211,12 +220,12 @@ export const RESOURCES: ResourceDefinition[] = [
     listPath: '/promotion/get-all', createPath: '/promotion/add', updatePath: '/promotion/update',
     deletePath: id => `/promotion/delete/${encodeURIComponent(id)}`,
     fields: [
-      { key: 'promotionName', label: 'Promotion name', kind: 'text' },
+      { key: 'promotionName', label: 'Promotion name', kind: 'text', required: true, minLength: 1, validationMessage: 'Promotion name is required.' },
       { key: 'description', label: 'Description', kind: 'textarea' },
-      { key: 'discountType', label: 'Discount type', kind: 'text' },
-      { key: 'discountValue', label: 'Discount value', kind: 'number' },
-      { key: 'startDate', label: 'Start date', kind: 'date' },
-      { key: 'endDate', label: 'End date', kind: 'date' },
+      { key: 'discountType', label: 'Discount type', kind: 'select', required: true, options: ['PERCENTAGE'], validationMessage: 'Discount type is required.' },
+      { key: 'discountValue', label: 'Discount value', kind: 'number', required: true, min: 0.01, custom: 'positive-number', validationMessage: 'Discount value must be greater than 0.' },
+      { key: 'startDate', label: 'Start date', kind: 'date', required: true, validationMessage: 'Start date is required.' },
+      { key: 'endDate', label: 'End date', kind: 'date', required: true, validationMessage: 'End date is required.' },
       statusField('ACTIVE', 'INACTIVE', 'EXPIRED'),
       { key: 'marketingOfficerId', label: 'Marketing officer', kind: 'relation', required: true, relation: relation('marketing-officers', 'marketingOfficerId', ['firstName', 'lastName']) },
     ],
@@ -259,15 +268,15 @@ export const RESOURCES: ResourceDefinition[] = [
     listPath: '/medicine/get-all-medicine', createPath: '/medicine/add-medicine', updatePath: '/medicine/update-medicine',
     deletePath: id => `/medicine/delete-medicine/${encodeURIComponent(id)}`,
     fields: [
-      { key: 'medicineName', label: 'Medicine name', kind: 'text' },
-      { key: 'genericName', label: 'Generic name', kind: 'text' },
+      { key: 'medicineName', label: 'Medicine name', kind: 'text', required: true, minLength: 1, validationMessage: 'Medicine name is required.' },
+      { key: 'genericName', label: 'Generic name', kind: 'text', required: true, minLength: 1, validationMessage: 'Generic name is required.' },
       { key: 'brandName', label: 'Brand name', kind: 'text' },
       { key: 'description', label: 'Description', kind: 'textarea' },
-      { key: 'category', label: 'Category', kind: 'text' },
-      { key: 'strength', label: 'Strength', kind: 'text' },
-      { key: 'unitPrice', label: 'Unit price', kind: 'number' },
-      { key: 'expiryDate', label: 'Expiry date', kind: 'date' },
-      { key: 'manufacturer', label: 'Manufacturer', kind: 'text' },
+      { key: 'category', label: 'Category', kind: 'text', required: true, minLength: 1, validationMessage: 'Category is required.' },
+      { key: 'strength', label: 'Strength', kind: 'text', required: true, minLength: 1, validationMessage: 'Strength is required.' },
+      { key: 'unitPrice', label: 'Unit price', kind: 'number', required: true, min: 0, custom: 'non-negative-number', validationMessage: 'Unit price must be 0 or more.' },
+      { key: 'expiryDate', label: 'Expiry date', kind: 'date', required: true, custom: 'future-date', validationMessage: 'Expiry date must be in the future.' },
+      { key: 'manufacturer', label: 'Manufacturer', kind: 'text', required: true, minLength: 1, validationMessage: 'Manufacturer is required.' },
       { key: 'prescriptionRequired', label: 'Prescription required', kind: 'checkbox' },
     ],
     columns: ['medicineId', 'medicineName', 'genericName', 'strength', 'unitPrice', 'expiryDate', 'prescriptionRequired'],
@@ -361,9 +370,9 @@ export const RESOURCES: ResourceDefinition[] = [
     deletePath: id => `/coupon/delete/${encodeURIComponent(id)}`,
     fields: [
       { key: 'promotionId', label: 'Promotion', kind: 'relation', required: true, relation: relation('promotions', 'promotionId', ['promotionName']) },
-      { key: 'couponCode', label: 'Coupon code', kind: 'text' },
-      { key: 'usageLimit', label: 'Usage limit', kind: 'number' },
-      { key: 'usedCount', label: 'Used count', kind: 'number' },
+      { key: 'couponCode', label: 'Coupon code', kind: 'text', required: true, minLength: 1, validationMessage: 'Coupon code is required.' },
+      { key: 'usageLimit', label: 'Usage limit', kind: 'number', required: true, min: 1, custom: 'positive-number', validationMessage: 'Usage limit must be greater than 0.' },
+      { key: 'usedCount', label: 'Used count', kind: 'number', min: 0, custom: 'non-negative-number', validationMessage: 'Used count must not be negative.' },
       statusField('ACTIVE', 'INACTIVE', 'EXPIRED'),
     ],
     columns: ['couponId', 'promotionId', 'couponCode', 'usageLimit', 'usedCount', 'status'],

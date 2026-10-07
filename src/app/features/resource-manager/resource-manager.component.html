@@ -122,8 +122,10 @@
             <input *ngSwitchDefault class="form-control" [id]="'field-' + field.key" [type]="field.kind" [formControlName]="field.key" [step]="field.kind === 'number' ? 'any' : null" />
           </ng-container>
           <small *ngIf="field.help" class="field-help">{{ field.help }}</small>
-          <small *ngIf="form.controls[field.key].touched && form.controls[field.key].hasError('required')" class="field-error">Select a {{ field.label.toLowerCase() }}.</small>
-          <small *ngIf="form.controls[field.key].touched && form.controls[field.key].hasError('email')" class="field-error">Enter a valid email address.</small>
+          <small *ngIf="fieldHasError(field.key) && fieldErrorMessage(field)" class="field-error">{{ fieldErrorMessage(field) }}</small>
+          <small *ngIf="field.key === 'closingTime' && form.touched && form.hasError('closingTimeBeforeOpening')" class="field-error">Closing time cannot be earlier than opening time.</small>
+          <small *ngIf="field.key === 'endDate' && form.touched && form.hasError('endDateBeforeStartDate')" class="field-error">End date cannot be earlier than the start date.</small>
+          <small *ngIf="field.key === 'discountValue' && form.touched && form.hasError('percentageDiscountTooHigh')" class="field-error">Percentage discount value cannot exceed 100.</small>
         </div>
       </div>
       <p class="form-error" *ngIf="formError" role="alert">{{ formError }}</p>

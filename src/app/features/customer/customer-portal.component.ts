@@ -47,6 +47,11 @@ export class CustomerPortalComponent implements OnInit {
   supportError = '';
   supportSuccess = '';
   orderSubmissionBlocked = false;
+  addItemsOrder: ApiRecord | null = null;
+  addItemsMedicineId: number | null = null;
+  addItemsQuantity = 1;
+  addItemsError = '';
+  addItemsSubmitting = false;
 
   readonly checkoutForm = this.formBuilder.nonNullable.group({
     deliveryAddress: ['', Validators.required],
@@ -288,6 +293,106 @@ export class CustomerPortalComponent implements OnInit {
         this.loadSupportAfterCreate();
       },
       error: error => this.supportError = this.errorFor(error),
+    });
+  }
+
+  canCancelOrder(order: ApiRecord): boolean {
+    return String(order['orderStatus'] ?? '').toUpperCase() === 'PENDING';
+  }
+
+  canAddItemsToOrder(order: ApiRecord): boolean {
+    return String(order['orderStatus'] ?? '').toUpperCase() === 'PENDING';
+  }
+
+  get addItemsSelectedMedicine(): ApiRecord | null {
+    if (this.addItemsMedicineId === null || this.addItemsMedicineId === undefined) {
+      return null;
+    }
+    return this.medicines.find(medicine => Number(medicine['medicineId']) === Number(this.addItemsMedicineId)) ?? null;
+  }
+
+  get addItemsSubtotal(): number {
+    const medicine = this.addItemsSelectedMedicine;
+    if (!medicine) return 0;
+    return this.price(medicine['unitPrice']) * Math.max(1, Number(this.addItemsQuantity) || 1);
+  }
+
+  openAddItems(order: ApiRecord): void {
+    this.addItemsOrder = order;
+    this.addItemsMedicineId = null;
+    this.addItemsQuantity = 1;
+    this.addItemsError = '';
+    this.portal.medicines().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: medicines => {
+        this.medicines = medicines;
+      },
+      error: error => {
+        this.addItemsError = this.errorFor(error);
+      },
+    });
+  }
+
+  closeAddItems(): void {
+    this.addItemsOrder = null;
+    this.addItemsMedicineId = null;
+    this.addItemsQuantity = 1;
+    this.addItemsError = '';
+    this.addItemsSubmitting = false;
+  }
+
+  submitAddItems(): void {
+    if (!this.addItemsOrder || this.addItemsSubmitting) {
+      return;
+    }
+    const medicine = this.addItemsSelectedMedicine;
+    const quantity = Number(this.addItemsQuantity);
+    if (!medicine || !Number.isFinite(quantity) || quantity <= 0) {
+      this.addItemsError = 'Select a medicine and enter a valid quantity.';
+      return;
+    }
+
+    const orderId = Number(this.addItemsOrder['orderId']);
+    if (!Number.isFinite(orderId)) {
+      this.addItemsError = 'The selected order is missing a valid identifier.';
+      return;
+    }
+
+    this.addItemsSubmitting = true;
+    this.addItemsError = '';
+    this.portal.addOrderItem(orderId, medicine, quantity).pipe(
+      finalize(() => this.addItemsSubmitting = false),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: () => {
+        this.successMessage = 'Order item added successfully.';
+        this.closeAddItems();
+        this.loadOrdersAfterCheckout();
+      },
+      error: error => {
+        this.addItemsError = this.errorFor(error);
+      },
+    });
+  }
+
+  cancelOrder(order: ApiRecord): void {
+    if (!this.canCancelOrder(order)) {
+      return;
+    }
+    const orderId = Number(order['orderId']);
+    if (!Number.isFinite(orderId) || !window.confirm('Are you sure you want to cancel this order?')) {
+      return;
+    }
+
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.portal.deleteOrder(orderId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.successMessage = 'Order cancelled successfully.';
+        this.loadPage();
+      },
+      error: error => {
+        this.errorMessage = this.errorFor(error);
+      },
     });
   }
 

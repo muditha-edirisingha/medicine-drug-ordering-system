@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ApiRecord } from '../../core/models/api.models';
 import { ResourceDefinition, ResourceField, RESOURCE_BY_KEY, recordLabel } from '../../core/models/resource.models';
 import { ApiService } from '../../core/services/api.service';
@@ -179,6 +179,9 @@ export class ResourceManagerComponent implements OnInit {
     const payload: ApiRecord = {};
     for (const field of this.resource.fields) {
       let value = this.form.controls[field.key]?.value;
+      if (typeof value === 'string') {
+        value = value.trim();
+      }
       if (field.kind === 'password' && value === '' && this.editingRecord && this.resource.includePasswordWhenBlank) {
         value = this.editingRecord[field.key] ?? null;
       } else if (value === '') {
@@ -312,10 +315,154 @@ export class ResourceManagerComponent implements OnInit {
       const originalValue = record[field.key];
       const initialValue = field.kind === 'password' ? '' : this.inputValue(field, originalValue);
       controls[field.key] = new FormControl<unknown>(initialValue, {
-        validators: field.required ? [Validators.required] : field.kind === 'email' ? [Validators.email] : [],
+        validators: this.buildFieldValidators(field),
       });
     }
-    this.form = new FormGroup(controls);
+    this.form = new FormGroup(controls, {
+      validators: this.buildResourceValidators(this.resource),
+    });
+  }
+
+  fieldHasError(fieldKey: string, errorKey?: string): boolean {
+    const control = this.form.get(fieldKey);
+    if (!control || !control.touched) return false;
+    return errorKey ? control.hasError(errorKey) : control.invalid;
+  }
+
+  fieldErrorMessage(field: ResourceField): string {
+    const control = this.form.get(field.key);
+    if (!control || !control.touched) return '';
+    if (control.hasError('required')) {
+      if (field.kind === 'relation' || field.kind === 'select') return `Select a ${field.label.toLowerCase()}.`;
+      return `${field.label} is required.`;
+    }
+    if (control.hasError('email')) return 'Enter a valid email address.';
+    if (control.hasError('pattern')) return field.validationMessage ?? `Enter a valid ${field.label.toLowerCase()}.`;
+    if (control.hasError('min')) return `${field.label} must be ${field.min} or more.`;
+    if (control.hasError('max')) return `${field.label} must be ${field.max} or less.`;
+    if (control.hasError('minlength')) return `${field.label} must be at least ${field.minLength} characters.`;
+    if (control.hasError('maxlength')) return `${field.label} must be ${field.maxLength} characters or fewer.`;
+    if (control.hasError('positiveNumber')) return field.validationMessage ?? `${field.label} must be greater than 0.`;
+    if (control.hasError('nonNegativeNumber')) return field.validationMessage ?? `${field.label} must be 0 or more.`;
+    if (control.hasError('futureDate')) return field.validationMessage ?? `${field.label} must be a future date.`;
+    return field.validationMessage ?? `Enter a valid ${field.label.toLowerCase()}.`;
+  }
+
+  private buildFieldValidators(field: ResourceField): ValidatorFn[] {
+    const validators: ValidatorFn[] = [];
+    if (field.required) {
+      validators.push((control: AbstractControl): ValidationErrors | null => {
+        const value = this.normalizedControlValue(control.value);
+        return value === null || value === undefined || value === '' ? { required: true } : null;
+      });
+    }
+    if (field.kind === 'email') validators.push(Validators.email);
+    if (field.pattern) validators.push(Validators.pattern(field.pattern));
+    if (field.minLength != null) validators.push(Validators.minLength(field.minLength));
+    if (field.maxLength != null) validators.push(Validators.maxLength(field.maxLength));
+    if (field.min != null) validators.push(Validators.min(field.min));
+    if (field.max != null) validators.push(Validators.max(field.max));
+    if (field.custom === 'positive-number') validators.push(this.positiveNumberValidator());
+    if (field.custom === 'non-negative-number') validators.push(this.nonNegativeNumberValidator());
+    if (field.custom === 'future-date') validators.push(this.futureDateValidator());
+    if (field.custom === 'sri-lankan-phone') validators.push(Validators.pattern(/^0\d{9}$/));
+    return validators;
+  }
+
+  private buildResourceValidators(resource: ResourceDefinition): ValidatorFn[] {
+    const validators: ValidatorFn[] = [];
+    switch (resource.key) {
+      case 'branches':
+        validators.push((group: AbstractControl): ValidationErrors | null => {
+          const opening = this.normalizedTimeValue(group.get('openingTime')?.value);
+          const closing = this.normalizedTimeValue(group.get('closingTime')?.value);
+          if (opening !== null && closing !== null && this.timeToMinutes(closing) < this.timeToMinutes(opening)) {
+            return { closingTimeBeforeOpening: true };
+          }
+          return null;
+        });
+        break;
+      case 'promotions':
+        validators.push((group: AbstractControl): ValidationErrors | null => {
+          const startDate = this.normalizedDateValue(group.get('startDate')?.value);
+          const endDate = this.normalizedDateValue(group.get('endDate')?.value);
+          if (startDate && endDate && endDate < startDate) {
+            return { endDateBeforeStartDate: true };
+          }
+
+          const discountType = this.normalizedControlValue(group.get('discountType')?.value);
+          const discountValue = this.coerceNumber(group.get('discountValue')?.value);
+          if (discountType === 'PERCENTAGE' && typeof discountValue === 'number' && discountValue > 100) {
+            return { percentageDiscountTooHigh: true };
+          }
+          return null;
+        });
+        break;
+      default:
+        break;
+    }
+    return validators;
+  }
+
+  private normalizedControlValue(value: unknown): unknown {
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      return trimmed === '' ? null : trimmed;
+    }
+    return value;
+  }
+
+  private normalizedDateValue(value: unknown): Date | null {
+    if (typeof value !== 'string' || !value) return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = new Date(`${trimmed}T00:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  private normalizedTimeValue(value: unknown): string | null {
+    if (typeof value !== 'string') return value === null || value === undefined ? null : String(value);
+    const trimmed = value.trim();
+    return trimmed === '' ? null : trimmed;
+  }
+
+  private timeToMinutes(value: string): number {
+    const [hours, minutes] = value.split(':').map(Number);
+    return (Number.isFinite(hours) ? hours : 0) * 60 + (Number.isFinite(minutes) ? minutes : 0);
+  }
+
+  private coerceNumber(value: unknown): number | null {
+    if (value === null || value === undefined || value === '') return null;
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  private positiveNumberValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = this.coerceNumber(control.value);
+      if (value === null || value === undefined || control.value === '' || control.value === null) return null;
+      return value > 0 ? null : { positiveNumber: true };
+    };
+  }
+
+  private nonNegativeNumberValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = this.coerceNumber(control.value);
+      if (value === null || value === undefined || control.value === '' || control.value === null) return null;
+      return value >= 0 ? null : { nonNegativeNumber: true };
+    };
+  }
+
+  private futureDateValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const raw = this.normalizedControlValue(control.value);
+      if (raw === null || raw === undefined || raw === '') return null;
+      const value = this.normalizedDateValue(raw);
+      if (!value) return { futureDate: true };
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return value.getTime() > today.getTime() ? null : { futureDate: true };
+    };
   }
 
   private inputValue(field: ResourceField, value: unknown): unknown {

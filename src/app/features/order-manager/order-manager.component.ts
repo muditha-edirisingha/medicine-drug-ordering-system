@@ -27,6 +27,11 @@ export class OrderManagerComponent implements OnInit {
   saving = false;
   errorMessage = '';
   successMessage = '';
+  addItemOrder: OrderDto | null = null;
+  addItemMedicineId: number | null = null;
+  addItemQuantity = 1;
+  addItemError = '';
+  addItemSaving = false;
 
   constructor(private readonly api: ApiService) {}
 
@@ -124,6 +129,112 @@ export class OrderManagerComponent implements OnInit {
       error: error => {
         this.saving = false;
         this.pendingStatus = this.selectedOrder?.orderStatus ?? 'PENDING';
+        this.errorMessage = ApiService.messageFor(error);
+      },
+    });
+  }
+
+  canDeleteOrder(order: OrderDto | null | undefined): boolean {
+    return Boolean(order) && String(order?.orderStatus ?? '').toUpperCase() === 'PENDING';
+  }
+
+  canAddItemsToOrder(order: OrderDto | null | undefined): boolean {
+    return Boolean(order) && String(order?.orderStatus ?? '').toUpperCase() === 'PENDING';
+  }
+
+  get selectedAddMedicine(): MedicineDto | null {
+    if (this.addItemMedicineId === null || this.addItemMedicineId === undefined) {
+      return null;
+    }
+    return this.medicines.find(medicine => Number(medicine.medicineId) === Number(this.addItemMedicineId)) ?? null;
+  }
+
+  get addItemSubtotal(): number {
+    const medicine = this.selectedAddMedicine;
+    if (!medicine) return 0;
+    return Number(medicine.unitPrice ?? 0) * Math.max(1, Number(this.addItemQuantity) || 1);
+  }
+
+  openAddOrderItem(order: OrderDto): void {
+    if (!this.canAddItemsToOrder(order)) {
+      return;
+    }
+    this.addItemOrder = order;
+    this.addItemMedicineId = null;
+    this.addItemQuantity = 1;
+    this.addItemError = '';
+  }
+
+  closeAddOrderItem(): void {
+    this.addItemOrder = null;
+    this.addItemMedicineId = null;
+    this.addItemQuantity = 1;
+    this.addItemError = '';
+    this.addItemSaving = false;
+  }
+
+  submitOrderItem(): void {
+    if (!this.addItemOrder || this.addItemSaving) {
+      return;
+    }
+
+    const medicine = this.selectedAddMedicine;
+    const quantity = Number(this.addItemQuantity);
+    if (!medicine || !Number.isFinite(quantity) || quantity <= 0) {
+      this.addItemError = 'Select a medicine and enter a valid quantity.';
+      return;
+    }
+
+    const orderId = Number(this.addItemOrder.orderId);
+    const unitPrice = Number(medicine.unitPrice ?? 0);
+    if (!Number.isFinite(orderId) || !Number.isFinite(unitPrice)) {
+      this.addItemError = 'The order or selected medicine is missing a valid value.';
+      return;
+    }
+
+    this.addItemSaving = true;
+    this.addItemError = '';
+    this.api.post('/orderItem/add-order-item', {
+      orderId,
+      medicineId: medicine.medicineId,
+      quantity,
+      unitPrice,
+      subTotal: unitPrice * quantity,
+    }).subscribe({
+      next: () => {
+        this.successMessage = 'Order item added successfully.';
+        this.closeAddOrderItem();
+        this.loadOrders(orderId);
+      },
+      error: error => {
+        this.addItemSaving = false;
+        this.addItemError = ApiService.messageFor(error);
+      },
+    });
+  }
+
+  deleteOrder(order: OrderDto): void {
+    if (!this.canDeleteOrder(order)) {
+      return;
+    }
+    const orderId = Number(order.orderId);
+    if (!Number.isFinite(orderId) || !window.confirm('Are you sure you want to cancel this order?')) {
+      return;
+    }
+
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.api.delete(`/order/delete-by-id/${encodeURIComponent(orderId)}`).subscribe({
+      next: () => {
+        this.successMessage = 'Order cancelled successfully.';
+        this.orders = this.orders.filter(item => item.orderId !== orderId);
+        if (this.selectedOrder?.orderId === orderId) {
+          this.selectedOrder = this.orders[0] ?? null;
+          this.pendingStatus = this.selectedOrder?.orderStatus ?? 'PENDING';
+        }
+        this.closeAddOrderItem();
+      },
+      error: error => {
         this.errorMessage = ApiService.messageFor(error);
       },
     });

@@ -16,6 +16,8 @@ describe('OrderManagerComponent', () => {
   let api: {
     get: jasmine.Spy;
     putText: jasmine.Spy;
+    post: jasmine.Spy;
+    delete: jasmine.Spy;
   };
 
   beforeEach(async () => {
@@ -38,6 +40,8 @@ describe('OrderManagerComponent', () => {
         order.orderStatus = 'CONFIRMED';
         return of('updated');
       }),
+      post: jasmine.createSpy('post').and.returnValue(of('created')),
+      delete: jasmine.createSpy('delete').and.returnValue(of('deleted')),
     };
 
     await TestBed.configureTestingModule({
@@ -82,5 +86,20 @@ describe('OrderManagerComponent', () => {
     expect(component.pendingStatus).toBe('PENDING');
     expect(component.errorMessage).toContain('could not complete');
     expect(component.saving).toBeFalse();
+  });
+
+  it('deletes a pending order after confirmation and clears the selected order', () => {
+    const fixture = TestBed.createComponent(OrderManagerComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    const confirmSpy = spyOn(window, 'confirm').and.returnValue(true);
+
+    component.selectOrder(order);
+    component.deleteOrder(order);
+
+    expect(confirmSpy).toHaveBeenCalledWith('Are you sure you want to cancel this order?');
+    expect(api.delete).toHaveBeenCalledWith('/order/delete-by-id/2');
+    expect(component.successMessage).toBe('Order cancelled successfully.');
+    expect(component.selectedOrder).toBeNull();
   });
 });

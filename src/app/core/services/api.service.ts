@@ -45,7 +45,16 @@ export class ApiService {
       return 'Cannot reach the backend. Check that it is running at localhost:8080.';
     }
 
-    const body = error.error as ApiErrorBody | string | null;
+    const backendMessage = this.extractMessage(error.error);
+    if (error.status === 400 && backendMessage) {
+      return backendMessage;
+    }
+    if (error.status === 409 && backendMessage) {
+      return backendMessage;
+    }
+    if (error.status === 404 && backendMessage) {
+      return backendMessage;
+    }
     if (error.status === 400) {
       return 'The backend could not accept this request. Check the entered values.';
     }
@@ -55,10 +64,38 @@ export class ApiService {
     if (error.status >= 500) {
       return 'The backend could not complete this request. Please try again.';
     }
-
-    if (typeof body === 'object' && body?.message && body.message.length < 160) {
-      return body.message;
+    if (backendMessage) {
+      return backendMessage;
     }
     return `Request failed (${error.status}). Please try again.`;
+  }
+
+  private static extractMessage(errorBody: unknown): string | null {
+    if (typeof errorBody === 'string') {
+      const value = errorBody.trim();
+      return value && value.length < 200 ? value : null;
+    }
+
+    if (!errorBody || typeof errorBody !== 'object') {
+      return null;
+    }
+
+    const body = errorBody as ApiErrorBody & Record<string, unknown>;
+    const message = typeof body.message === 'string' ? body.message.trim() : '';
+    if (message && message.length < 200) {
+      return message;
+    }
+
+    const plainError = typeof body.error === 'string' ? body.error.trim() : '';
+    if (plainError && plainError.toLowerCase() !== 'bad request' && plainError.toLowerCase() !== 'conflict' && plainError.toLowerCase() !== 'not found' && plainError.toLowerCase() !== 'internal server error' && plainError.length < 200) {
+      return plainError;
+    }
+
+    const nestedMessage = typeof body['message'] === 'string' ? body['message'] : null;
+    if (nestedMessage && nestedMessage.length < 200) {
+      return nestedMessage;
+    }
+
+    return null;
   }
 }

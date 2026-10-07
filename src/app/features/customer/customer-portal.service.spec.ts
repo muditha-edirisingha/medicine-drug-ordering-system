@@ -114,6 +114,28 @@ describe('CustomerPortalService', () => {
     expect(placedOrderId).toBe(21);
   });
 
+  it('adds an item to a pending order without creating a new order', () => {
+    portal.addOrderItem(21, { medicineId: 8, unitPrice: 2.5 }, 3).subscribe();
+
+    const request = http.expectOne('http://localhost:8080/orderItem/add-order-item');
+    expect(request.request.body).toEqual({
+      orderId: 21,
+      medicineId: 8,
+      quantity: 3,
+      unitPrice: 2.5,
+      subTotal: 7.5,
+    });
+    request.flush(null);
+  });
+
+  it('deletes a pending order through the existing backend endpoint', () => {
+    portal.deleteOrder(21).subscribe();
+
+    const request = http.expectOne('http://localhost:8080/order/delete-by-id/21');
+    expect(request.request.method).toBe('DELETE');
+    request.flush(null);
+  });
+
   it('sends unassigned pending prescriptions and open support requests', () => {
     portal.createPrescription({
       customerId: 13,
